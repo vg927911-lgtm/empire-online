@@ -300,11 +300,11 @@ setTimeout(() => {
 }, 1600);
 
 const pageCopy = {
-  overview: ['O INÍCIO DE UMA ERA', 'Seu mundo está<br><em>esperando por você.</em>', 'A terra está diante da sua civilização. Escolha onde começar e transforme um pequeno assentamento em uma sociedade.'],
-  build: ['DESENVOLVIMENTO', 'Construa as bases<br><em>da sua civilização.</em>', 'Aqui ficarão as construções, abrigos, locais de armazenamento e estruturas que você desenvolver.'],
-  research: ['CONHECIMENTO', 'Toda descoberta<br><em>muda o futuro.</em>', 'Aqui você acompanhará as técnicas, ideias e conhecimentos desenvolvidos pela sua sociedade.'],
-  society: ['POPULAÇÃO', 'Uma sociedade<br><em>começa com pessoas.</em>', 'Acompanhe os habitantes, suas necessidades, funções e o crescimento das próximas gerações.'],
-  map: ['EXPLORAÇÃO', 'Um mundo inteiro<br><em>para descobrir.</em>', 'Explore continentes, biomas e recursos naturais antes de escolher onde sua história vai começar.']
+  lobby: ['BEM-VINDO AO CAMPO DE BATALHA', 'Sua próxima partida<br><em>começa aqui.</em>', 'Prepare seu personagem, escolha um modo e entre em uma partida. A vitória começa antes da queda.'],
+  character: ['PERSONAGEM', 'Prepare seu<br><em>combatente.</em>', 'Aqui você poderá personalizar aparência, roupas e itens visuais do seu personagem.'],
+  arsenal: ['ARSENAL', 'Seu equipamento<br><em>para a partida.</em>', 'Aqui ficará a seleção e personalização visual dos equipamentos do jogo.'],
+  collection: ['COLEÇÃO', 'Suas conquistas<br><em>e recompensas.</em>', 'Acompanhe itens cosméticos, recompensas e conquistas desbloqueadas.'],
+  store: ['LOJA', 'Novidades da<br><em>temporada.</em>', 'A loja terá itens cosméticos e conteúdos opcionais. Nenhuma compra está ativa nesta versão.']
 };
 document.querySelectorAll('.nav-item').forEach(button => button.addEventListener('click', () => {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item === button));
@@ -313,12 +313,22 @@ document.querySelectorAll('.nav-item').forEach(button => button.addEventListener
   page.querySelector('.page-kicker').textContent = kicker;
   page.querySelector('h2').innerHTML = title;
   page.querySelector('.page-lead').textContent = lead;
-  document.querySelector('#game-feedback').textContent = button.dataset.page === 'overview'
-    ? 'Dica: explore o mapa antes de decidir onde sua história começa.'
-    : 'Esta área visual já está preparada; os sistemas de jogo serão implementados nas próximas etapas.';
+  document.querySelector('.mode-grid').classList.toggle('hidden', button.dataset.page !== 'lobby');
+  document.querySelector('.world-summary').classList.toggle('hidden', button.dataset.page !== 'lobby');
+  document.querySelector('.start-card').classList.toggle('hidden', button.dataset.page !== 'lobby');
+  document.querySelector('#game-feedback').textContent = button.dataset.page === 'lobby'
+    ? 'Escolha um modo de jogo. Esta versão ainda é um protótipo visual.'
+    : 'Esta seção é uma prévia da interface. Os sistemas serão implementados por etapas.';
 }));
-document.querySelector('#found-settlement').addEventListener('click', () => {
-  document.querySelector('#game-feedback').textContent = 'A fundação de assentamentos será ativada quando o sistema de posicionamento e construção estiver pronto.';
+let selectedMode = 'battle';
+document.querySelectorAll('.mode-card').forEach(card => card.addEventListener('click', () => {
+  selectedMode = card.dataset.mode;
+  document.querySelectorAll('.mode-card').forEach(item => item.classList.toggle('selected', item === card));
+  document.querySelector('#selected-mode-title').textContent = selectedMode === 'battle' ? 'Battle Royale' : 'Ranquiada';
+  document.querySelector('#game-feedback').textContent = selectedMode === 'battle' ? 'Modo clássico selecionado.' : 'Modo ranquiado selecionado.';
+}));
+document.querySelector('#start-match').addEventListener('click', () => {
+  document.querySelector('#game-feedback').textContent = 'O sistema de matchmaking ainda não foi implementado. Primeiro vamos construir a movimentação e o mapa de batalha.';
 });
 document.querySelector('#game-menu').addEventListener('click', () => {
   document.querySelector('.game-sidebar').classList.toggle('mobile-open');
