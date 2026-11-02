@@ -4,24 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101b24">
-  <meta name="description" content="Explore o primeiro mundo de Empire Online.">
-  <title>Empire Online — Primeiro mundo</title>
+  <meta name="description" content="Empire Online — um mundo persistente de civilizações.">
+  <title>Empire Online — Mundo 001</title>
 </head>
 <body>
   <div id="app">
     <header class="hud">
-      <div class="brand"><span class="brand-mark">E</span><div><strong>EMPIRE ONLINE</strong><small>PRIMEIRO MUNDO · PROTÓTIPO 0.1</small></div></div>
-      <div class="status"><span></span> MUNDO EXPLORÁVEL</div>
+      <div class="brand"><span class="brand-mark">E</span><div><strong>EMPIRE ONLINE</strong><small>MUNDO 001 · ERA PRÉ-CIVILIZAÇÃO</small></div></div>
+      <div class="status"><span></span> MUNDO GERADO</div>
     </header>
     <main id="world" aria-label="Mundo 3D de Empire Online"></main>
     <section class="intro">
-      <p class="eyebrow">UM NOVO COMEÇO</p>
-      <h1>Uma ilha.<br><em>Um mundo de possibilidades.</em></h1>
-      <p class="description">Explore o primeiro território de Empire Online. Arraste para girar a câmera e use o zoom para observar o ambiente.</p>
-      <div class="controls"><span><b>ARRASTAR</b> girar câmera</span><span><b>PINÇAR / SCROLL</b> aproximar</span></div>
+      <p class="eyebrow">SEMENTE DO MUNDO <span id="world-seed">...</span></p>
+      <h1>Um planeta.<br><em>Histórias por nascer.</em></h1>
+      <p class="description">Explore continentes, biomas e recursos naturais. Este é o primeiro mapa procedural de Empire Online.</p>
+      <div class="controls"><span><b>ARRASTAR</b> girar câmera</span><span><b>PINÇAR</b> aproximar</span></div>
     </section>
-    <div class="bottom-note">MUNDO PROCEDURAL <span>•</span> ILHA 001</div>
-    <div id="loading" class="loading">GERANDO O MUNDO...</div>
+    <aside class="world-panel">
+      <div class="panel-heading">DADOS DO MUNDO</div>
+      <div id="world-biomes">Gerando biomas...</div>
+      <div id="world-resources">Distribuindo recursos...</div>
+      <div class="panel-foot">MAPA PROCEDURAL · PROTÓTIPO 0.2</div>
+    </aside>
+    <div class="bottom-note">MUNDO 001 <span>•</span> EXPLORAÇÃO</div>
+    <div id="loading" class="loading">GERANDO CONTINENTES...</div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>
