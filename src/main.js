@@ -245,12 +245,15 @@ document.addEventListener('visibilitychange', () => {
 });
 invalidate();
 
+
 const authScreen = document.querySelector('#auth-screen');
 const authForm = document.querySelector('#auth-form');
 const authMessage = document.querySelector('#auth-message');
 const authSubmit = document.querySelector('#auth-submit');
 const loadingDetail = document.querySelector('#loading-detail');
+const VISITOR_KEY = 'empire-online-visitor';
 let authMode = 'login';
+
 document.querySelectorAll('.auth-tab').forEach(tab => tab.addEventListener('click', () => {
   authMode = tab.dataset.mode;
   document.querySelectorAll('.auth-tab').forEach(item => item.classList.toggle('active', item === tab));
@@ -258,17 +261,34 @@ document.querySelectorAll('.auth-tab').forEach(tab => tab.addEventListener('clic
   document.querySelector('#password').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
   authMessage.textContent = authMode === 'login' ? 'Entre para continuar sua jornada.' : 'Crie seu acesso para guardar sua civilização.';
 }));
+
 authForm.addEventListener('submit', event => {
   event.preventDefault();
-  authMessage.textContent = 'O sistema de contas ainda precisa ser conectado ao servidor. Por enquanto, entre como visitante para testar o mundo.';
-});
-document.querySelector('#guest-entry').addEventListener('click', () => {
-  loading.classList.remove('hidden', 'fade');
-  loadingDetail.textContent = 'Carregando terreno, biomas e recursos...';
-  setTimeout(() => {
-    authScreen.remove();
-    loading.classList.add('fade');
-    setTimeout(() => loading.classList.add('hidden'), 600);
-  }, 1800);
+  authMessage.textContent = 'O login real ainda será conectado ao servidor. Use o acesso de visitante para testar esta versão.';
 });
 
+function enterWorld() {
+  loadingDetail.textContent = 'Carregando terreno, biomas e recursos...';
+  loading.classList.remove('hidden', 'fade');
+  setTimeout(() => {
+    authScreen.classList.add('hidden');
+    loading.classList.add('fade');
+    setTimeout(() => loading.classList.add('hidden'), 600);
+  }, 1500);
+}
+
+document.querySelector('#guest-entry').addEventListener('click', () => {
+  try { localStorage.setItem(VISITOR_KEY, '1'); } catch {}
+  enterWorld();
+});
+
+const alreadyEntered = (() => {
+  try { return localStorage.getItem(VISITOR_KEY) === '1'; } catch { return false; }
+})();
+setTimeout(() => {
+  loading.classList.add('fade');
+  setTimeout(() => {
+    loading.classList.add('hidden');
+    if (!alreadyEntered) authScreen.classList.remove('hidden');
+  }, 550);
+}, 1600);
