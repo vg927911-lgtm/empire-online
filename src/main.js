@@ -6,147 +6,243 @@ const host = document.querySelector('#world');
 const loading = document.querySelector('#loading');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9db8bd);
-scene.fog = new THREE.FogExp2(0x9db8bd, 0.009);
+scene.fog = new THREE.FogExp2(0x9db8bd, 0.0028);
 
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 500);
-camera.position.set(34, 27, 38);
 const isMobile = matchMedia('(max-width: 700px)').matches || navigator.maxTouchPoints > 1;
 const cores = navigator.hardwareConcurrency || 4;
 const memory = navigator.deviceMemory || 4;
 const lowPower = isMobile || cores <= 4 || memory <= 4;
 const pixelRatioCap = lowPower ? 1 : 1.5;
-const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, alpha: false, powerPreference: 'low-power' });
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 700);
+camera.position.set(78, 72, 92);
+
+const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, powerPreference: 'low-power' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
-renderer.setClearColor(0x9db8bd, 1);
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = !lowPower;
-renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = lowPower ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 host.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.5, 0);
+controls.target.set(0, 0, 0);
 controls.enableDamping = true;
-controls.dampingFactor = 0.055;
-controls.minDistance = 13;
-controls.maxDistance = 85;
+controls.dampingFactor = 0.06;
+controls.minDistance = 24;
+controls.maxDistance = 230;
 controls.maxPolarAngle = Math.PI * 0.48;
 
-scene.add(new THREE.HemisphereLight(0xd9edee, 0x52634c, 2));
-const sun = new THREE.DirectionalLight(0xffedcf, 3);
-sun.position.set(-25, 38, 18);
-sun.castShadow = !lowPower;
-sun.shadow.mapSize.set(lowPower ? 512 : 1024, lowPower ? 512 : 1024);
-sun.shadow.camera.left = -35; sun.shadow.camera.right = 35;
-sun.shadow.camera.top = 35; sun.shadow.camera.bottom = -35;
+scene.add(new THREE.HemisphereLight(0xd9edee, 0x52634c, 2.1));
+const sun = new THREE.DirectionalLight(0xffedcf, 2.3);
+sun.position.set(-70, 110, 55);
 scene.add(sun);
 
-const rand = (a,b) => a + Math.random() * (b-a);
-const smooth = (a,b,x) => { const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
-function noise(x,z){return Math.sin(x*.21+Math.cos(z*.17))*.8+Math.sin(z*.39-x*.13)*.42+Math.cos((x+z)*.31)*.28;}
-function heightAt(x,z){
-  const n=noise(x,z);
-  const edge=Math.sqrt((x/25)**2+(z/19)**2);
-  const mass=1-smooth(.68,1.08,edge+n*.018);
-  const hills=Math.max(0,1-Math.sqrt((x+3)**2/210+(z-1)**2/150));
-  const ridge=Math.max(0,1-Math.abs(x*.62+z*.28+3)/10);
-  return Math.max(-1.8,mass*(1.1+hills*5.5+ridge*2.4+n*.48)-1.35);
+const WORLD_SEED = 20261102;
+function seeded(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 4294967296;
+  };
+}
+const random = seeded(WORLD_SEED);
+const rand = (a, b) => a + random() * (b - a);
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const smooth = (a, b, x) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+function noise(x, z) {
+  return Math.sin(x * .071 + Math.cos(z * .053)) * .48
+    + Math.sin(z * .113 - x * .047) * .31
+    + Math.cos((x + z) * .089) * .21
+    + Math.sin(x * .19 + z * .16) * .09;
 }
 
-// Oceano e superfície da ilha
-const waterMaterial = lowPower
-  ? new THREE.MeshLambertMaterial({ color: 0x397f91 })
-  : new THREE.MeshStandardMaterial({ color: 0x397f91, roughness: .32, metalness: .08 });
-const water=new THREE.Mesh(new THREE.PlaneGeometry(180,180,1,1),waterMaterial);
-water.rotation.x=-Math.PI/2; water.position.y=-.35; water.receiveShadow=!lowPower; scene.add(water);
+// Continentes com margens irregulares, baías e penínsulas.
+const continents = [
+  { x: -62, z: -28, rx: 49, rz: 36, h: 1.0 },
+  { x: 12, z: -45, rx: 38, rz: 28, h: .8 },
+  { x: 62, z: 16, rx: 43, rz: 34, h: 1.05 },
+  { x: -28, z: 48, rx: 34, rz: 25, h: .72 },
+  { x: 78, z: -62, rx: 19, rz: 15, h: .6 },
+  { x: -103, z: 51, rx: 17, rz: 13, h: .55 }
+];
+function landField(x, z) {
+  let field = -10;
+  for (const c of continents) {
+    const dx = (x - c.x) / c.rx;
+    const dz = (z - c.z) / c.rz;
+    const angle = Math.atan2(dz, dx);
+    const wobble = noise(x + c.x * .3, z - c.z * .2) * .12
+      + Math.sin(angle * 5 + c.x) * .035
+      + Math.cos(angle * 3 + c.z) * .025;
+    const score = (1 - Math.sqrt(dx * dx + dz * dz) + wobble) * c.h;
+    field = Math.max(field, score);
+  }
+  return field;
+}
+function terrainAt(x, z) {
+  const land = landField(x, z);
+  if (land < .025) return -2.8;
+  const hills = Math.max(0, noise(x * .85, z * .85));
+  const ridge = Math.max(0, Math.sin(x * .035 + z * .022) * Math.cos(z * .04));
+  return .25 + smooth(.025, .42, land) * (1.8 + hills * 4.8 + ridge * 3.2);
+}
+function biomeAt(x, z, elevation) {
+  const latitude = Math.abs(z) / 82;
+  const moisture = noise(x * .55 + 500, z * .55 - 300);
+  if (elevation > 6.1) return 'mountain';
+  if (latitude > .82) return 'tundra';
+  if (latitude < .22 && moisture < -.22) return 'desert';
+  if (moisture > -.05 && latitude < .72) return 'forest';
+  return 'grassland';
+}
+const biomeColors = {
+  ocean: new THREE.Color(0x397f91),
+  desert: new THREE.Color(0xc5ad78),
+  grassland: new THREE.Color(0x8da96c),
+  forest: new THREE.Color(0x527d55),
+  tundra: new THREE.Color(0x9caeaa),
+  mountain: new THREE.Color(0x858b87)
+};
 
-const divisions=lowPower ? 68 : 120, sizeX=58, sizeZ=46, positions=[], colors=[], indices=[];
-const tint=new THREE.Color();
-for(let iz=0;iz<=divisions;iz++){
-  for(let ix=0;ix<=divisions;ix++){
-    const x=(ix/divisions-.5)*sizeX, z=(iz/divisions-.5)*sizeZ, y=heightAt(x,z);
-    positions.push(x,y,z);
-    if(y<-.1)tint.set(0xb9ad88); else if(y<1.1)tint.set(0x829b62); else if(y<3.5)tint.set(0x648653); else if(y<5.5)tint.set(0x777d68); else tint.set(0xb6b7a8);
-    const v=.94+(noise(x*1.7,z*1.7)+1.5)*.035;
-    colors.push(tint.r*v,tint.g*v,tint.b*v);
-    if(ix<divisions&&iz<divisions){const a=iz*(divisions+1)+ix,b=a+divisions+1;indices.push(a,b,a+1,b,b+1,a+1);}
+const ocean = new THREE.Mesh(
+  new THREE.PlaneGeometry(340, 270),
+  lowPower ? new THREE.MeshLambertMaterial({ color: 0x397f91 }) :
+    new THREE.MeshStandardMaterial({ color: 0x397f91, roughness: .34, metalness: .06 })
+);
+ocean.rotation.x = -Math.PI / 2;
+ocean.position.y = -.12;
+scene.add(ocean);
+
+// Malha do planeta: densidade menor no celular.
+const segmentsX = lowPower ? 142 : 220;
+const segmentsZ = lowPower ? 104 : 164;
+const worldWidth = 250;
+const worldDepth = 185;
+const positions = [];
+const colors = [];
+const indices = [];
+const color = new THREE.Color();
+for (let iz = 0; iz <= segmentsZ; iz++) {
+  for (let ix = 0; ix <= segmentsX; ix++) {
+    const x = (ix / segmentsX - .5) * worldWidth;
+    const z = (iz / segmentsZ - .5) * worldDepth;
+    const y = terrainAt(x, z);
+    const biome = y < 0 ? 'ocean' : biomeAt(x, z, y);
+    positions.push(x, y, z);
+    color.copy(biomeColors[biome]);
+    const variation = .94 + (noise(x * 1.7, z * 1.7) + 1) * .045;
+    colors.push(color.r * variation, color.g * variation, color.b * variation);
+    if (ix < segmentsX && iz < segmentsZ) {
+      const a = iz * (segmentsX + 1) + ix;
+      const b = a + segmentsX + 1;
+      indices.push(a, b, a + 1, b, b + 1, a + 1);
+    }
   }
 }
-const terrainGeometry=new THREE.BufferGeometry();
-terrainGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-terrainGeometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
-terrainGeometry.setIndex(indices); terrainGeometry.computeVertexNormals();
-const terrainMaterial = lowPower
+const landGeometry = new THREE.BufferGeometry();
+landGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+landGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+landGeometry.setIndex(indices);
+landGeometry.computeVertexNormals();
+const landMaterial = lowPower
   ? new THREE.MeshLambertMaterial({ vertexColors: true })
   : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .96 });
-const terrain=new THREE.Mesh(terrainGeometry,terrainMaterial);
-terrain.receiveShadow=!lowPower; terrain.castShadow=!lowPower; scene.add(terrain);
+const landMesh = new THREE.Mesh(landGeometry, landMaterial);
+scene.add(landMesh);
 
-// Árvores em instâncias para reduzir o custo de renderização
-const trunkGeo=new THREE.CylinderGeometry(.13,.2,1.5,6);
-const crownGeo=new THREE.IcosahedronGeometry(1,1);
-const treeLimit=lowPower ? 85 : 220;
-const trunks=new THREE.InstancedMesh(trunkGeo,new THREE.MeshStandardMaterial({color:0x76523a,roughness:1}),treeLimit);
-const crowns=new THREE.InstancedMesh(crownGeo,new THREE.MeshStandardMaterial({color:0x426b45,roughness:1,flatShading:true}),treeLimit);
-const dummy=new THREE.Object3D(); let treeCount=0;
-for(let i=0;i<2200&&treeCount<treeLimit;i++){
-  const x=rand(-23,23),z=rand(-18,18),y=heightAt(x,z);
-  if(y<.45||y>4.6||Math.random()<.2)continue;
-  const s=rand(.75,1.35);
-  dummy.position.set(x,y+.7*s,z); dummy.scale.set(s,s,s); dummy.rotation.y=rand(0,Math.PI*2); dummy.updateMatrix(); trunks.setMatrixAt(treeCount,dummy.matrix);
-  dummy.position.y=y+1.75*s; dummy.scale.set(.95*s,rand(1,1.45)*s,.95*s); dummy.updateMatrix(); crowns.setMatrixAt(treeCount,dummy.matrix);
-  treeCount++;
+// Vegetação e depósitos são instâncias para manter poucas chamadas de desenho.
+const treeLimit = lowPower ? 280 : 650;
+const trunkMesh = new THREE.InstancedMesh(
+  new THREE.CylinderGeometry(.16, .23, 1.65, 5),
+  new THREE.MeshLambertMaterial({ color: 0x76523a }), treeLimit
+);
+const crownMesh = new THREE.InstancedMesh(
+  new THREE.IcosahedronGeometry(1, 1),
+  new THREE.MeshLambertMaterial({ color: 0x426b45, flatShading: true }), treeLimit
+);
+const rockLimit = lowPower ? 90 : 190;
+const rockMesh = new THREE.InstancedMesh(
+  new THREE.IcosahedronGeometry(1, 1),
+  new THREE.MeshLambertMaterial({ color: 0x777d79, flatShading: true }), rockLimit
+);
+const oreMesh = new THREE.InstancedMesh(
+  new THREE.OctahedronGeometry(1, 0),
+  new THREE.MeshLambertMaterial({ color: 0x9a8874, flatShading: true }), lowPower ? 34 : 75
+);
+const dummy = new THREE.Object3D();
+let treeCount = 0, rockCount = 0, oreCount = 0;
+for (let i = 0; i < (lowPower ? 1800 : 4200); i++) {
+  const x = rand(-120, 120), z = rand(-88, 88);
+  const y = terrainAt(x, z);
+  if (y < .5) continue;
+  const biome = biomeAt(x, z, y);
+  if (biome === 'forest' && treeCount < treeLimit && random() < .75) {
+    const scale = rand(.75, 1.45);
+    dummy.position.set(x, y + .72 * scale, z);
+    dummy.scale.set(scale, scale, scale);
+    dummy.rotation.y = rand(0, Math.PI * 2);
+    dummy.updateMatrix();
+    trunkMesh.setMatrixAt(treeCount, dummy.matrix);
+    dummy.position.y = y + 1.8 * scale;
+    dummy.scale.set(.95 * scale, rand(1, 1.5) * scale, .95 * scale);
+    dummy.updateMatrix();
+    crownMesh.setMatrixAt(treeCount, dummy.matrix);
+    treeCount++;
+  } else if ((biome === 'mountain' || biome === 'tundra') && rockCount < rockLimit && random() < .28) {
+    dummy.position.set(x, y + .25, z);
+    dummy.scale.set(rand(.3, .9), rand(.25, .7), rand(.3, .8));
+    dummy.rotation.set(rand(0, 1), rand(0, 3), rand(0, 1));
+    dummy.updateMatrix();
+    rockMesh.setMatrixAt(rockCount++, dummy.matrix);
+  } else if (biome === 'mountain' && oreCount < oreMesh.count && random() < .13) {
+    dummy.position.set(x, y + .5, z);
+    dummy.scale.set(.45, rand(.55, 1.1), .45);
+    dummy.rotation.y = rand(0, 3);
+    dummy.updateMatrix();
+    oreMesh.setMatrixAt(oreCount++, dummy.matrix);
+  }
 }
-trunks.count=treeCount; crowns.count=treeCount; trunks.castShadow=!lowPower; crowns.castShadow=!lowPower; scene.add(trunks,crowns);
+trunkMesh.count = treeCount;
+crownMesh.count = treeCount;
+rockMesh.count = rockCount;
+oreMesh.count = oreCount;
+scene.add(trunkMesh, crownMesh, rockMesh, oreMesh);
 
-// Rochas nas regiões elevadas
-const rockLimit=lowPower ? 22 : 70;
-const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),new THREE.MeshStandardMaterial({color:0x777d79,roughness:1,flatShading:true}),rockLimit);
-let rockCount=0;
-for(let i=0;i<600&&rockCount<rockLimit;i++){
-  const x=rand(-23,23),z=rand(-18,18),y=heightAt(x,z);
-  if(y<1.4||Math.random()<.55)continue;
-  dummy.position.set(x,y+.25,z); dummy.scale.set(rand(.25,.8),rand(.2,.65),rand(.25,.75));
-  dummy.rotation.set(rand(0,1),rand(0,3),rand(0,1)); dummy.updateMatrix(); rocks.setMatrixAt(rockCount++,dummy.matrix);
-}
-rocks.count=rockCount; rocks.castShadow=!lowPower; scene.add(rocks);
+const seedLabel = document.querySelector('#world-seed');
+if (seedLabel) seedLabel.textContent = WORLD_SEED.toString();
+const biomeLabel = document.querySelector('#world-biomes');
+if (biomeLabel) biomeLabel.textContent = '6 continentes · 5 biomas';
+const resourceLabel = document.querySelector('#world-resources');
+if (resourceLabel) resourceLabel.textContent = `${treeCount} árvores · ${rockCount} rochas · ${oreCount} minérios`;
 
-// Pequenos recifes e ilhotas no horizonte
-for(let i=0;i<(lowPower ? 5 : 9);i++){
-  const x=rand(-85,85),z=rand(-80,80);
-  if(Math.abs(x)<38&&Math.abs(z)<34)continue;
-  const island=new THREE.Mesh(new THREE.SphereGeometry(rand(3,7),lowPower ? 10 : 18,lowPower ? 6 : 10),lowPower ? new THREE.MeshLambertMaterial({color:0x718b68}) : new THREE.MeshStandardMaterial({color:0x718b68,roughness:1}));
-  island.scale.y=.22; island.position.set(x,-.8,z); scene.add(island);
-}
-
-let frameId=0;
-function render(){
-  frameId=0;
-  if(document.hidden) return;
+let frameId = 0;
+function render() {
+  frameId = 0;
+  if (document.hidden) return;
   controls.update();
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
 }
-function invalidate(){
-  if(!document.hidden && frameId===0) frameId=requestAnimationFrame(render);
+function invalidate() {
+  if (!document.hidden && frameId === 0) frameId = requestAnimationFrame(render);
 }
-controls.addEventListener('change',invalidate);
-function resize(){
-  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1,pixelRatioCap));
+controls.addEventListener('change', invalidate);
+function resize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
   invalidate();
 }
-addEventListener('resize',resize, { passive: true });
+addEventListener('resize', resize, { passive: true });
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden){
-    if(frameId) cancelAnimationFrame(frameId);
-    frameId=0;
-  } else {
-    invalidate();
-  }
+  if (document.hidden) {
+    if (frameId) cancelAnimationFrame(frameId);
+    frameId = 0;
+  } else invalidate();
 });
 invalidate();
-setTimeout(()=>loading.classList.add('done'),700);
-setTimeout(()=>loading.remove(),1500);
+setTimeout(() => loading.classList.add('done'), 800);
+setTimeout(() => loading.remove(), 1700);
