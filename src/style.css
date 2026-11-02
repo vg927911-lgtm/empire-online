@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{font-family:'DM Sans',sans-serif;color:#f4f1e9;background:#101b24;font-synthesis:none;text-rendering:optimizeLegibility}
+*{box-sizing:border-box}
+html,body,#app{width:100%;height:100%;margin:0;overflow:hidden}
+body{min-width:320px}
+#world{position:absolute;inset:0}
+#world canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;z-index:2;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:24px 5vw;pointer-events:none;background:linear-gradient(180deg,rgba(8,17,24,.62),transparent)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(221,190,125,.7);color:#dfc58e;font:800 20px Manrope,sans-serif;border-radius:11px}
+.brand strong{display:block;font:800 12px Manrope,sans-serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:4px;color:#b6c0bd;font-size:9px;letter-spacing:.13em}
+.status{color:#c8d4ce;font-size:10px;letter-spacing:.13em}
+.status span{display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#86bd91;box-shadow:0 0 12px #86bd91}
+.intro{position:absolute;z-index:1;left:8vw;top:27%;width:min(430px,48vw);pointer-events:none;text-shadow:0 2px 18px rgba(5,14,20,.35)}
+.eyebrow{color:#dfc58e;font-size:10px;font-weight:700;letter-spacing:.24em}
+h1{margin:17px 0;font:700 clamp(34px,5vw,64px)/1.05 Manrope,sans-serif;letter-spacing:-.055em}
+h1 em{color:#d7c397;font-style:normal}
+.description{max-width:350px;color:#d0d9d4;font-size:14px;line-height:1.7}
+.controls{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:28px;color:#d0d9d4;font-size:10px}
+.controls b{color:#e6d3a7;margin-right:5px;letter-spacing:.08em}
+.bottom-note{position:absolute;z-index:2;bottom:25px;right:5vw;color:#d2d8d3;font-size:9px;letter-spacing:.17em}
+.bottom-note span{color:#d7c397;padding:0 7px}
+.loading{position:absolute;z-index:3;inset:0;display:grid;place-items:center;background:#101b24;color:#dfc58e;font-size:11px;letter-spacing:.2em;transition:opacity .7s ease}
+.loading.done{opacity:0;pointer-events:none}
+@media(max-width:650px){.hud{padding:18px 20px}.status{font-size:8px}.intro{left:22px;top:24%;width:min(340px,82vw)}h1{font-size:clamp(34px,10vw,48px)}.description{max-width:290px;font-size:12px}.controls{max-width:260px;gap:9px 14px;font-size:9px}.bottom-note{right:20px;bottom:18px;font-size:8px}}
