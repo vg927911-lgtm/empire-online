@@ -244,5 +244,31 @@ document.addEventListener('visibilitychange', () => {
   } else invalidate();
 });
 invalidate();
-setTimeout(() => loading.classList.add('done'), 800);
-setTimeout(() => loading.remove(), 1700);
+
+const authScreen = document.querySelector('#auth-screen');
+const authForm = document.querySelector('#auth-form');
+const authMessage = document.querySelector('#auth-message');
+const authSubmit = document.querySelector('#auth-submit');
+const loadingDetail = document.querySelector('#loading-detail');
+let authMode = 'login';
+document.querySelectorAll('.auth-tab').forEach(tab => tab.addEventListener('click', () => {
+  authMode = tab.dataset.mode;
+  document.querySelectorAll('.auth-tab').forEach(item => item.classList.toggle('active', item === tab));
+  authSubmit.innerHTML = authMode === 'login' ? 'ENTRAR NO JOGO <span>↗</span>' : 'CRIAR MINHA CONTA <span>↗</span>';
+  document.querySelector('#password').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+  authMessage.textContent = authMode === 'login' ? 'Entre para continuar sua jornada.' : 'Crie seu acesso para guardar sua civilização.';
+}));
+authForm.addEventListener('submit', event => {
+  event.preventDefault();
+  authMessage.textContent = 'O sistema de contas ainda precisa ser conectado ao servidor. Por enquanto, entre como visitante para testar o mundo.';
+});
+document.querySelector('#guest-entry').addEventListener('click', () => {
+  loading.classList.remove('hidden', 'fade');
+  loadingDetail.textContent = 'Carregando terreno, biomas e recursos...';
+  setTimeout(() => {
+    authScreen.remove();
+    loading.classList.add('fade');
+    setTimeout(() => loading.classList.add('hidden'), 600);
+  }, 1800);
+});
+
