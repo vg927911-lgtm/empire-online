@@ -247,6 +247,7 @@ invalidate();
 
 
 const authScreen = document.querySelector('#auth-screen');
+const gameUI = document.querySelector('#game-ui');
 const authForm = document.querySelector('#auth-form');
 const authMessage = document.querySelector('#auth-message');
 const authSubmit = document.querySelector('#auth-submit');
@@ -272,6 +273,11 @@ function enterWorld() {
   loading.classList.remove('hidden', 'fade');
   setTimeout(() => {
     authScreen.classList.add('hidden');
+    gameUI.classList.remove('hidden');
+    document.querySelector('.intro')?.classList.add('hidden');
+    document.querySelector('.world-panel')?.classList.add('hidden');
+    document.querySelector('.hud')?.classList.add('hidden');
+    document.querySelector('.bottom-note')?.classList.add('hidden');
     loading.classList.add('fade');
     setTimeout(() => loading.classList.add('hidden'), 600);
   }, 1500);
@@ -292,3 +298,28 @@ setTimeout(() => {
     if (!alreadyEntered) authScreen.classList.remove('hidden');
   }, 550);
 }, 1600);
+
+const pageCopy = {
+  overview: ['O INÍCIO DE UMA ERA', 'Seu mundo está<br><em>esperando por você.</em>', 'A terra está diante da sua civilização. Escolha onde começar e transforme um pequeno assentamento em uma sociedade.'],
+  build: ['DESENVOLVIMENTO', 'Construa as bases<br><em>da sua civilização.</em>', 'Aqui ficarão as construções, abrigos, locais de armazenamento e estruturas que você desenvolver.'],
+  research: ['CONHECIMENTO', 'Toda descoberta<br><em>muda o futuro.</em>', 'Aqui você acompanhará as técnicas, ideias e conhecimentos desenvolvidos pela sua sociedade.'],
+  society: ['POPULAÇÃO', 'Uma sociedade<br><em>começa com pessoas.</em>', 'Acompanhe os habitantes, suas necessidades, funções e o crescimento das próximas gerações.'],
+  map: ['EXPLORAÇÃO', 'Um mundo inteiro<br><em>para descobrir.</em>', 'Explore continentes, biomas e recursos naturais antes de escolher onde sua história vai começar.']
+};
+document.querySelectorAll('.nav-item').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item === button));
+  const [kicker, title, lead] = pageCopy[button.dataset.page];
+  const page = document.querySelector('#game-page');
+  page.querySelector('.page-kicker').textContent = kicker;
+  page.querySelector('h2').innerHTML = title;
+  page.querySelector('.page-lead').textContent = lead;
+  document.querySelector('#game-feedback').textContent = button.dataset.page === 'overview'
+    ? 'Dica: explore o mapa antes de decidir onde sua história começa.'
+    : 'Esta área visual já está preparada; os sistemas de jogo serão implementados nas próximas etapas.';
+}));
+document.querySelector('#found-settlement').addEventListener('click', () => {
+  document.querySelector('#game-feedback').textContent = 'A fundação de assentamentos será ativada quando o sistema de posicionamento e construção estiver pronto.';
+});
+document.querySelector('#game-menu').addEventListener('click', () => {
+  document.querySelector('.game-sidebar').classList.toggle('mobile-open');
+});
