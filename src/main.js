@@ -10,17 +10,20 @@ scene.fog = new THREE.FogExp2(0x9db8bd, 0.009);
 
 const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 500);
 camera.position.set(34, 27, 38);
-const isMobile = matchMedia('(max-width: 700px)').matches;
-const lowPower = isMobile || (navigator.hardwareConcurrency || 4) <= 4;
-const pixelRatioCap = lowPower ? 1.15 : 1.5;
-const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, powerPreference: 'low-power' });
+const isMobile = matchMedia('(max-width: 700px)').matches || navigator.maxTouchPoints > 1;
+const cores = navigator.hardwareConcurrency || 4;
+const memory = navigator.deviceMemory || 4;
+const lowPower = isMobile || cores <= 4 || memory <= 4;
+const pixelRatioCap = lowPower ? 1 : 1.5;
+const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, alpha: false, powerPreference: 'low-power' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
+renderer.setClearColor(0x9db8bd, 1);
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = !lowPower;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMapping = lowPower ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 host.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -53,10 +56,13 @@ function heightAt(x,z){
 }
 
 // Oceano e superfície da ilha
-const water=new THREE.Mesh(new THREE.PlaneGeometry(240,240),new THREE.MeshStandardMaterial({color:0x397f91,roughness:.32,metalness:.08}));
-water.rotation.x=-Math.PI/2; water.position.y=-.35; water.receiveShadow=true; scene.add(water);
+const waterMaterial = lowPower
+  ? new THREE.MeshLambertMaterial({ color: 0x397f91 })
+  : new THREE.MeshStandardMaterial({ color: 0x397f91, roughness: .32, metalness: .08 });
+const water=new THREE.Mesh(new THREE.PlaneGeometry(180,180,1,1),waterMaterial);
+water.rotation.x=-Math.PI/2; water.position.y=-.35; water.receiveShadow=!lowPower; scene.add(water);
 
-const divisions=lowPower ? 88 : 130, sizeX=58, sizeZ=46, positions=[], colors=[], indices=[];
+const divisions=lowPower ? 68 : 120, sizeX=58, sizeZ=46, positions=[], colors=[], indices=[];
 const tint=new THREE.Color();
 for(let iz=0;iz<=divisions;iz++){
   for(let ix=0;ix<=divisions;ix++){
@@ -72,13 +78,16 @@ const terrainGeometry=new THREE.BufferGeometry();
 terrainGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
 terrainGeometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
 terrainGeometry.setIndex(indices); terrainGeometry.computeVertexNormals();
-const terrain=new THREE.Mesh(terrainGeometry,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.96}));
+const terrainMaterial = lowPower
+  ? new THREE.MeshLambertMaterial({ vertexColors: true })
+  : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .96 });
+const terrain=new THREE.Mesh(terrainGeometry,terrainMaterial);
 terrain.receiveShadow=!lowPower; terrain.castShadow=!lowPower; scene.add(terrain);
 
 // Árvores em instâncias para reduzir o custo de renderização
 const trunkGeo=new THREE.CylinderGeometry(.13,.2,1.5,6);
 const crownGeo=new THREE.IcosahedronGeometry(1,1);
-const treeLimit=lowPower ? 125 : 220;
+const treeLimit=lowPower ? 85 : 220;
 const trunks=new THREE.InstancedMesh(trunkGeo,new THREE.MeshStandardMaterial({color:0x76523a,roughness:1}),treeLimit);
 const crowns=new THREE.InstancedMesh(crownGeo,new THREE.MeshStandardMaterial({color:0x426b45,roughness:1,flatShading:true}),treeLimit);
 const dummy=new THREE.Object3D(); let treeCount=0;
@@ -93,7 +102,7 @@ for(let i=0;i<2200&&treeCount<treeLimit;i++){
 trunks.count=treeCount; crowns.count=treeCount; trunks.castShadow=!lowPower; crowns.castShadow=!lowPower; scene.add(trunks,crowns);
 
 // Rochas nas regiões elevadas
-const rockLimit=lowPower ? 35 : 70;
+const rockLimit=lowPower ? 22 : 70;
 const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),new THREE.MeshStandardMaterial({color:0x777d79,roughness:1,flatShading:true}),rockLimit);
 let rockCount=0;
 for(let i=0;i<600&&rockCount<rockLimit;i++){
@@ -105,21 +114,22 @@ for(let i=0;i<600&&rockCount<rockLimit;i++){
 rocks.count=rockCount; rocks.castShadow=!lowPower; scene.add(rocks);
 
 // Pequenos recifes e ilhotas no horizonte
-for(let i=0;i<9;i++){
+for(let i=0;i<(lowPower ? 5 : 9);i++){
   const x=rand(-85,85),z=rand(-80,80);
   if(Math.abs(x)<38&&Math.abs(z)<34)continue;
-  const island=new THREE.Mesh(new THREE.SphereGeometry(rand(3,7),18,10),new THREE.MeshStandardMaterial({color:0x718b68,roughness:1}));
+  const island=new THREE.Mesh(new THREE.SphereGeometry(rand(3,7),lowPower ? 10 : 18,lowPower ? 6 : 10),lowPower ? new THREE.MeshLambertMaterial({color:0x718b68}) : new THREE.MeshStandardMaterial({color:0x718b68,roughness:1}));
   island.scale.y=.22; island.position.set(x,-.8,z); scene.add(island);
 }
 
 let frameId=0;
 function render(){
   frameId=0;
+  if(document.hidden) return;
   controls.update();
   renderer.render(scene,camera);
 }
 function invalidate(){
-  if(frameId===0) frameId=requestAnimationFrame(render);
+  if(!document.hidden && frameId===0) frameId=requestAnimationFrame(render);
 }
 controls.addEventListener('change',invalidate);
 function resize(){
@@ -128,7 +138,15 @@ function resize(){
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1,pixelRatioCap));
   invalidate();
 }
-addEventListener('resize',resize);
+addEventListener('resize',resize, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){
+    if(frameId) cancelAnimationFrame(frameId);
+    frameId=0;
+  } else {
+    invalidate();
+  }
+});
 invalidate();
 setTimeout(()=>loading.classList.add('done'),700);
 setTimeout(()=>loading.remove(),1500);
