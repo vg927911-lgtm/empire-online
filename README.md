@@ -1,47 +1,37 @@
 # Empire Online
 
-Protótipo web de tiro em terceira pessoa (TPS), com foco em celulares e controles touch.
+Protótipo TPS mobile-first feito com Vite e Three.js.
 
-## O que já funciona
+## Versão visual 0.2
 
-- Arena 3D compacta de treinamento, com ruínas, coberturas e alvos.
-- Câmera TPS atrás do personagem.
-- Movimento por teclado no computador e analógico virtual no celular.
-- Controle de câmera por mouse ou arraste na tela.
-- Rifle, pistola e shotgun com troca de arma e recarga.
-- Alvos de treino com hitbox de peito e cabeça.
-- Dano numérico flutuante e indicação de CAPA (headshot).
-- HUD com vida, colete, munição, minimapa ilustrativo, tempo e eliminações.
-- Pulo, agachar, mirar, pausar e reiniciar treinamento.
-- Ajustes automáticos de qualidade para aparelhos móveis e hardware modesto.
+- Menu principal com identidade visual tática, tela de personalização e configurações.
+- Quatro paletas cosméticas selecionáveis; a escolha fica salva no aparelho.
+- Arena com texturas procedurais de areia e pedra, sem depender de downloads externos.
+- HUD de combate, controles touch, rifle, pistola e shotgun.
+- Alvos de treino com hitboxes de cabeça e peito, dano e indicação de CAPA.
+- Qualidade gráfica ajustada automaticamente para aparelhos modestos.
 
 ## Executar no Termux
 
-Requer Node.js instalado.
-
 ```sh
-git pull
+git pull origin main
 npm install
 npm run dev -- --host 0.0.0.0
 ```
 
-Abra no navegador do próprio aparelho o endereço local exibido pelo Vite. Para acessar por outro dispositivo na mesma rede, use o endereço de rede informado no terminal.
+Abra `http://localhost:5173` no navegador do aparelho.
 
 ## Controles
 
 ### Celular
 - Analógico esquerdo: movimentar.
 - Arrastar no lado direito: girar a câmera.
-- Botões na tela: atirar, mirar, pular, agachar, recarregar e trocar arma.
+- Botões: atirar, mirar, pular, agachar, recarregar e trocar arma.
 
 ### Computador
-- WASD ou setas: movimentar.
-- Mouse: mirar e atirar.
-- Espaço: pular.
-- Shift: correr.
-- R: recarregar.
-- 1, 2 e 3: trocar arma.
+- WASD/setas: movimentar; mouse: mirar/atirar.
+- Espaço: pular; Shift: correr; R: recarregar; 1/2/3: trocar arma.
 
-## Limites desta versão
+## Estado do projeto
 
-Este é um protótipo local single-player. Os alvos são bots de treinamento; ainda não há matchmaking, partidas online, contas, salvamento em servidor ou multiplayer. O minimapa é ilustrativo. O projeto usa Vite e Three.js.
+Esta versão continua sendo um protótipo single-player local. As skins são cosméticas e salvas localmente no navegador. Ainda não existe servidor de contas, login Google, banco de dados online, matchmaking ou multiplayer. Para essas funções será necessário configurar um projeto Supabase (ou backend equivalente), as chaves públicas de ambiente e o provedor OAuth do Google; nenhuma chave privada deve ser colocada no código do cliente.
