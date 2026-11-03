@@ -32,6 +32,9 @@ function proceduralTexture(base, accent, kind='sand') {
  let seed=kind==='stone'?91:37;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
  if(kind==='stone'){
   for(let y=0;y<256;y+=32)for(let x=0;x<256;x+=48){const ox=(Math.floor(y/32)%2)*24;ctx.fillStyle=rand()>.5?base:accent;ctx.globalAlpha=.22+rand()*.18;ctx.fillRect(x+ox+1,y+1,45,29);ctx.globalAlpha=1;ctx.strokeStyle='#171b1a';ctx.globalAlpha=.3;ctx.strokeRect(x+ox,y,47,31);ctx.globalAlpha=1;}
+ } else if(kind==='wood'){
+  for(let y=0;y<256;y+=64){ctx.fillStyle=rand()>.5?base:accent;ctx.globalAlpha=.45;ctx.fillRect(0,y,256,62);ctx.globalAlpha=.55;ctx.strokeStyle='#241b13';ctx.lineWidth=3;ctx.strokeRect(1,y+1,254,61);ctx.globalAlpha=.3;for(let k=0;k<9;k++){ctx.beginPath();const yy=y+8+rand()*46;ctx.moveTo(0,yy);ctx.bezierCurveTo(70,yy-5,160,yy+5,256,yy-2);ctx.stroke();}ctx.globalAlpha=1;}
+  for(let i=0;i<8;i++){ctx.strokeStyle='#302316';ctx.globalAlpha=.25;ctx.beginPath();ctx.ellipse(rand()*256,rand()*256,5+rand()*12,2+rand()*4,0,0,Math.PI*2);ctx.stroke();}
  } else {
   for(let i=0;i<1800;i++){ctx.globalAlpha=.05+rand()*.12;ctx.fillStyle=rand()>.5?accent:'#25271e';const s=1+rand()*3;ctx.fillRect(rand()*256,rand()*256,s,s);}
   ctx.globalAlpha=1;
