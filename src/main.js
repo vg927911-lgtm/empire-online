@@ -26,7 +26,22 @@ sun.shadow.mapSize.set(1024, 1024);
 scene.add(sun);
 
 const mat = (color, roughness = .82, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
-const floorMat = mat(0x9a967f);
+function proceduralTexture(base, accent, kind='sand') {
+ const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');
+ ctx.fillStyle=base;ctx.fillRect(0,0,256,256);
+ let seed=kind==='stone'?91:37;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+ if(kind==='stone'){
+  for(let y=0;y<256;y+=32)for(let x=0;x<256;x+=48){const ox=(Math.floor(y/32)%2)*24;ctx.fillStyle=rand()>.5?base:accent;ctx.globalAlpha=.22+rand()*.18;ctx.fillRect(x+ox+1,y+1,45,29);ctx.globalAlpha=1;ctx.strokeStyle='#171b1a';ctx.globalAlpha=.3;ctx.strokeRect(x+ox,y,47,31);ctx.globalAlpha=1;}
+ } else {
+  for(let i=0;i<1800;i++){ctx.globalAlpha=.05+rand()*.12;ctx.fillStyle=rand()>.5?accent:'#25271e';const s=1+rand()*3;ctx.fillRect(rand()*256,rand()*256,s,s);}
+  ctx.globalAlpha=1;
+ }
+ const tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),4);return tex;
+}
+const sandTexture=proceduralTexture('#88816b','#c5b58c');
+sandTexture.repeat.set(12,12);
+const stoneTexture=proceduralTexture('#77796f','#b0a58a','stone');stoneTexture.repeat.set(2,1);
+const floorMat = mat(0xffffff);floorMat.map=sandTexture;
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(110, 110), floorMat);
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
@@ -62,6 +77,10 @@ centerRing.rotation.x=-Math.PI/2; centerRing.position.y=.025; scene.add(centerRi
 // Player model
 const player = new THREE.Group(); scene.add(player);
 const bodyMat=mat(0x273c49), vestMat=mat(0x596c58), skinMat=mat(0xc99772), darkMat=mat(0x18232a), helmetMat=mat(0x344b55,.45,.25);
+const skinPalette=[{name:'OPERADOR TÁTICO',vest:0x596c58,body:0x273c49},{name:'ÁRTICO',vest:0x547b91,body:0x263e52},{name:'INFERNO',vest:0x8d4239,body:0x42252a},{name:'SOMBRA',vest:0x343b43,body:0x171d25}];
+let equippedSkin=Number(localStorage.getItem('empire-skin')||0);
+function applySkin(index){equippedSkin=(index+skinPalette.length)%skinPalette.length;const s=skinPalette[equippedSkin];vestMat.color.setHex(s.vest);bodyMat.color.setHex(s.body);localStorage.setItem('empire-skin',String(equippedSkin));const name=document.getElementById('skin-name');if(name)name.textContent=s.name;document.querySelectorAll('.skin-option').forEach((b,i)=>b.classList.toggle('selected',i===equippedSkin));}
+
 const body = new THREE.Mesh(new THREE.CapsuleGeometry(.43,.72,4,8),vestMat); body.position.y=1.35; body.castShadow=!lowPower; player.add(body);
 const chest = new THREE.Mesh(new THREE.BoxGeometry(.78,.58,.48),bodyMat); chest.position.set(0,1.48,0); player.add(chest);
 const head = new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),skinMat); head.position.y=2.05; player.add(head);
@@ -110,7 +129,7 @@ function toast(msg){ui.toast.textContent=msg;ui.toast.classList.add('show');clea
 function refreshHud(){
  ui.hp.textContent=hp+'/200';ui.hpFill.style.width=(hp/200*100)+'%';ui.armor.textContent=armor;
  ui.ammo.textContent=ammo;ui.reserve.textContent=reserve;ui.weapon.textContent=weapons[weaponIndex].name;ui.type.textContent=weapons[weaponIndex].type;
- ui.kills.textContent=String(kills).padStart(2,'0');ui.targets.textContent=String(bots.filter(b=>b.userData.alive).length).padStart(2,'0');
+ ui.kills.textContent=String(kills).padStart(2,'0');const mk=document.getElementById('menu-kills');if(mk)mk.textContent=String(kills).padStart(2,'0');ui.targets.textContent=String(bots.filter(b=>b.userData.alive).length).padStart(2,'0');
 }
 function showDamage(value,headshot,point){
  const el=document.createElement('div');el.className='damage-number'+(headshot?' headshot':'');el.textContent=(headshot?'✦ ':'')+value+(headshot?' CAPA':'');
