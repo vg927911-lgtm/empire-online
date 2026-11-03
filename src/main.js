@@ -171,7 +171,7 @@ function movePlayer(dt){
   const f=forward/Math.max(1,len),s=side/Math.max(1,len);
   const speed=(keys.ShiftLeft?8.5:5.2)*(isCrouched?.48:1);
   const dx=(Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt;
-  const dz=(Math.cos(yaw)*f-Math.sin(yaw)*s)*speed*dt;
+  const dz=(-Math.cos(yaw)*f+Math.sin(yaw)*s)*speed*dt;
   player.position.x=THREE.MathUtils.clamp(player.position.x+dx,-21,21);
   player.position.z=THREE.MathUtils.clamp(player.position.z+dz,-21,21);
   player.rotation.y=yaw+Math.atan2(s,f);
