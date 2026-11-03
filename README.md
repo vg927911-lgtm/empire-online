@@ -2,11 +2,13 @@
 
 Protótipo TPS mobile-first feito com Vite e Three.js.
 
-## Versão visual 0.2
+## Versão visual 0.3
 
-- Menu principal com identidade visual tática, tela de personalização e configurações.
+- Entrada direta no lobby, sem tela de carregamento bloqueando a abertura.
+- Lobby com painel de operador, modo de treino e estado local.
+- Tela de personalização e configurações com controles independentes do motor 3D.
 - Quatro paletas cosméticas selecionáveis; a escolha fica salva no aparelho.
-- Arena com texturas procedurais de areia e pedra, sem depender de downloads externos.
+- Arena com texturas procedurais de areia, pedra e madeira, além de caixas, rochas e coberturas.
 - HUD de combate, controles touch, rifle, pistola e shotgun.
 - Alvos de treino com hitboxes de cabeça e peito, dano e indicação de CAPA.
 - Qualidade gráfica ajustada automaticamente para aparelhos modestos.
