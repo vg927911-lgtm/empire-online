@@ -1,335 +1,226 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import './style.css';
 
-const host = document.querySelector('#world');
-const loading = document.querySelector('#loading');
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9db8bd);
-scene.fog = new THREE.FogExp2(0x9db8bd, 0.0028);
-
-const isMobile = matchMedia('(max-width: 700px)').matches || navigator.maxTouchPoints > 1;
+const root = document.querySelector('#game-root');
+const isMobile = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 const cores = navigator.hardwareConcurrency || 4;
-const memory = navigator.deviceMemory || 4;
-const lowPower = isMobile || cores <= 4 || memory <= 4;
-const pixelRatioCap = lowPower ? 1 : 1.5;
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 700);
-camera.position.set(78, 72, 92);
+const lowPower = isMobile || cores <= 4 || (navigator.deviceMemory || 4) <= 4;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9bb1b3);
+scene.fog = new THREE.Fog(0x9bb1b3, 34, 105);
 
-const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, powerPreference: 'low-power' });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
+const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 150);
+const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, powerPreference: 'low-power', alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lowPower ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = !lowPower;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = lowPower ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-host.appendChild(renderer.domElement);
+root.appendChild(renderer.domElement);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0, 0);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.minDistance = 24;
-controls.maxDistance = 230;
-controls.maxPolarAngle = Math.PI * 0.48;
-
-scene.add(new THREE.HemisphereLight(0xd9edee, 0x52634c, 2.1));
-const sun = new THREE.DirectionalLight(0xffedcf, 2.3);
-sun.position.set(-70, 110, 55);
+scene.add(new THREE.HemisphereLight(0xe2f1f1, 0x59645b, 2.1));
+const sun = new THREE.DirectionalLight(0xffe6bd, 2.1);
+sun.position.set(-18, 28, 14);
+sun.castShadow = !lowPower;
+sun.shadow.mapSize.set(1024, 1024);
 scene.add(sun);
 
-const WORLD_SEED = 20261102;
-function seeded(seed) {
-  let value = seed >>> 0;
-  return () => {
-    value = (value * 1664525 + 1013904223) >>> 0;
-    return value / 4294967296;
-  };
-}
-const random = seeded(WORLD_SEED);
-const rand = (a, b) => a + random() * (b - a);
-const clamp01 = v => Math.max(0, Math.min(1, v));
-const smooth = (a, b, x) => {
-  const t = clamp01((x - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
-function noise(x, z) {
-  return Math.sin(x * .071 + Math.cos(z * .053)) * .48
-    + Math.sin(z * .113 - x * .047) * .31
-    + Math.cos((x + z) * .089) * .21
-    + Math.sin(x * .19 + z * .16) * .09;
-}
+const mat = (color, roughness = .82, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+const floorMat = mat(0x9a967f);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(110, 110), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
 
-// Continentes com margens irregulares, baías e penínsulas.
-const continents = [
-  { x: -62, z: -28, rx: 49, rz: 36, h: 1.0 },
-  { x: 12, z: -45, rx: 38, rz: 28, h: .8 },
-  { x: 62, z: 16, rx: 43, rz: 34, h: 1.05 },
-  { x: -28, z: 48, rx: 34, rz: 25, h: .72 },
-  { x: 78, z: -62, rx: 19, rz: 15, h: .6 },
-  { x: -103, z: 51, rx: 17, rz: 13, h: .55 }
+const arena = new THREE.Group();
+scene.add(arena);
+const wallMat = mat(0x777c78);
+const trimMat = mat(0xc1a66f, .7);
+function block(x,y,z,sx,sy,sz,material,group=arena) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz), material);
+  mesh.position.set(x,y,z); mesh.castShadow = !lowPower; mesh.receiveShadow = true; group.add(mesh); return mesh;
+}
+// Arena compacta: ruínas baixas, coberturas e alvos de treino.
+for (let i=0;i<24;i++) {
+  const a = i / 24 * Math.PI * 2, r = 24;
+  block(Math.cos(a)*r, 2.1, Math.sin(a)*r, 7, 4.2, 1.5, wallMat).rotation.y = -a;
+}
+for (const [x,z] of [[-12,-10],[12,-10],[-12,10],[12,10],[0,-17],[0,17]]) {
+  block(x,1.05,z,4.2,2.1,2.2,wallMat);
+  block(x,2.2,z,4.4,.18,2.4,trimMat);
+}
+for (let i=0;i<12;i++) {
+  const a=i/12*Math.PI*2;
+  const pillar= new THREE.Mesh(new THREE.CylinderGeometry(.55,.7,3.5,7),trimMat);
+  pillar.position.set(Math.cos(a)*19,1.75,Math.sin(a)*19); pillar.castShadow=!lowPower; arena.add(pillar);
+}
+const grid = new THREE.GridHelper(48,24,0x6e766d,0x898b7e);
+grid.position.y=.012; scene.add(grid);
+const centerRing = new THREE.Mesh(new THREE.RingGeometry(5.8,6,.6,64), new THREE.MeshBasicMaterial({color:0xd8bd7e,side:THREE.DoubleSide}));
+centerRing.rotation.x=-Math.PI/2; centerRing.position.y=.025; scene.add(centerRing);
+
+// Player model
+const player = new THREE.Group(); scene.add(player);
+const bodyMat=mat(0x273c49), vestMat=mat(0x596c58), skinMat=mat(0xc99772), darkMat=mat(0x18232a), helmetMat=mat(0x344b55,.45,.25);
+const body = new THREE.Mesh(new THREE.CapsuleGeometry(.43,.72,4,8),vestMat); body.position.y=1.35; body.castShadow=!lowPower; player.add(body);
+const chest = new THREE.Mesh(new THREE.BoxGeometry(.78,.58,.48),bodyMat); chest.position.set(0,1.48,0); player.add(chest);
+const head = new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),skinMat); head.position.y=2.05; player.add(head);
+const helmet = new THREE.Mesh(new THREE.SphereGeometry(.3,12,8,0,Math.PI*2,0,Math.PI*.55),helmetMat); helmet.position.y=2.1; player.add(helmet);
+const legGeo=new THREE.CapsuleGeometry(.17,.58,3,6);
+for(const x of [-.22,.22]) { const leg=new THREE.Mesh(legGeo,darkMat); leg.position.set(x,.48,0); player.add(leg); }
+const armGeo=new THREE.CapsuleGeometry(.13,.55,3,6);
+for(const x of [-.53,.53]) { const arm=new THREE.Mesh(armGeo,vestMat); arm.position.set(x,1.42,0); arm.rotation.z=x*.35; player.add(arm); }
+const gun = new THREE.Group(); player.add(gun);
+const gunBody = new THREE.Mesh(new THREE.BoxGeometry(.16,.17,.82),darkMat); gunBody.position.set(.42,1.46,-.52); gun.add(gunBody);
+const gunBarrel = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.46,8),helmetMat); gunBarrel.rotation.x=Math.PI/2; gunBarrel.position.set(.42,1.47,-1.12); gun.add(gunBarrel);
+player.position.set(0,0,9);
+
+const weapons=[
+ {name:'RIFLE',type:'AR · AUTOMÁTICO',mag:30,reserve:120,capacity:30,damage:24,head:96,rate:125,spread:.018},
+ {name:'PISTOLA',type:'PISTOLA · SEMI',mag:12,reserve:60,capacity:12,damage:32,head:128,rate:280,spread:.012},
+ {name:'SHOTGUN',type:'12G · CURTO ALCANCE',mag:6,reserve:36,capacity:6,damage:18,head:54,rate:650,spread:.075}
 ];
-function landField(x, z) {
-  let field = -10;
-  for (const c of continents) {
-    const dx = (x - c.x) / c.rx;
-    const dz = (z - c.z) / c.rz;
-    const angle = Math.atan2(dz, dx);
-    const wobble = noise(x + c.x * .3, z - c.z * .2) * .12
-      + Math.sin(angle * 5 + c.x) * .035
-      + Math.cos(angle * 3 + c.z) * .025;
-    const score = (1 - Math.sqrt(dx * dx + dz * dz) + wobble) * c.h;
-    field = Math.max(field, score);
-  }
-  return field;
+let weaponIndex=0, ammo=30, reserve=120, hp=200, armor=100, kills=0, elapsed=0, lastShot=0, isPaused=false, isAiming=false, isCrouched=false, isMoving=false;
+const keys={};
+const bots=[];
+const raycaster=new THREE.Raycaster();
+const clock=new THREE.Clock();
+let yaw=0, pitch=-.12, verticalVelocity=0, onGround=true, reloadUntil=0;
+const tempV=new THREE.Vector3();
+
+function makeBot(x,z,index){
+ const group=new THREE.Group(); scene.add(group); group.position.set(x,0,z);
+ const botBody=new THREE.Mesh(new THREE.CapsuleGeometry(.4,.7,4,8),mat(index%2?0x8b6548:0x576c74)); botBody.position.y=1.32; botBody.castShadow=!lowPower; group.add(botBody);
+ const torso=new THREE.Mesh(new THREE.BoxGeometry(.72,.62,.44),mat(0x35454b)); torso.position.y=1.42; group.add(torso);
+ const botHead=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10),skinMat); botHead.position.y=2.04; group.add(botHead);
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI*.55),mat(0x283e48)); cap.position.y=2.1; group.add(cap);
+ const plate=new THREE.Mesh(new THREE.BoxGeometry(1.05,.09,.08),mat(0x5a342a)); plate.position.set(0,2.42,0); group.add(plate);
+ group.userData={hp:100,alive:true,parts:{head:botHead,chest:torso},index,baseX:x,baseZ:z,phase:index*1.7};
+ bots.push(group);
 }
-function terrainAt(x, z) {
-  const land = landField(x, z);
-  if (land < .025) return -2.8;
-  const hills = Math.max(0, noise(x * .85, z * .85));
-  const ridge = Math.max(0, Math.sin(x * .035 + z * .022) * Math.cos(z * .04));
-  return .25 + smooth(.025, .42, land) * (1.8 + hills * 4.8 + ridge * 3.2);
-}
-function biomeAt(x, z, elevation) {
-  const latitude = Math.abs(z) / 82;
-  const moisture = noise(x * .55 + 500, z * .55 - 300);
-  if (elevation > 6.1) return 'mountain';
-  if (latitude > .82) return 'tundra';
-  if (latitude < .22 && moisture < -.22) return 'desert';
-  if (moisture > -.05 && latitude < .72) return 'forest';
-  return 'grassland';
-}
-const biomeColors = {
-  ocean: new THREE.Color(0x397f91),
-  desert: new THREE.Color(0xc5ad78),
-  grassland: new THREE.Color(0x8da96c),
-  forest: new THREE.Color(0x527d55),
-  tundra: new THREE.Color(0x9caeaa),
-  mountain: new THREE.Color(0x858b87)
+[[-8,-14],[8,-14],[-17,0],[17,0],[-8,15],[8,15]].forEach((p,i)=>makeBot(p[0],p[1],i));
+
+const $=id=>document.getElementById(id);
+const ui={
+ hp:$('hp-text'),hpFill:$('hp-fill'),armor:$('armor-text'),ammo:$('ammo'),reserve:$('reserve'),
+ weapon:$('weapon-name'),type:$('weapon-type'),kills:$('kills'),targets:$('target-count'),timer:$('timer'),
+ hit:$('hitmarker'),damage:$('damage-layer'),toast:$('toast')
 };
-
-const ocean = new THREE.Mesh(
-  new THREE.PlaneGeometry(340, 270),
-  lowPower ? new THREE.MeshLambertMaterial({ color: 0x397f91 }) :
-    new THREE.MeshStandardMaterial({ color: 0x397f91, roughness: .34, metalness: .06 })
-);
-ocean.rotation.x = -Math.PI / 2;
-ocean.position.y = -.12;
-scene.add(ocean);
-
-// Malha do planeta: densidade menor no celular.
-const segmentsX = lowPower ? 142 : 220;
-const segmentsZ = lowPower ? 104 : 164;
-const worldWidth = 250;
-const worldDepth = 185;
-const positions = [];
-const colors = [];
-const indices = [];
-const color = new THREE.Color();
-for (let iz = 0; iz <= segmentsZ; iz++) {
-  for (let ix = 0; ix <= segmentsX; ix++) {
-    const x = (ix / segmentsX - .5) * worldWidth;
-    const z = (iz / segmentsZ - .5) * worldDepth;
-    const y = terrainAt(x, z);
-    const biome = y < 0 ? 'ocean' : biomeAt(x, z, y);
-    positions.push(x, y, z);
-    color.copy(biomeColors[biome]);
-    const variation = .94 + (noise(x * 1.7, z * 1.7) + 1) * .045;
-    colors.push(color.r * variation, color.g * variation, color.b * variation);
-    if (ix < segmentsX && iz < segmentsZ) {
-      const a = iz * (segmentsX + 1) + ix;
-      const b = a + segmentsX + 1;
-      indices.push(a, b, a + 1, b, b + 1, a + 1);
-    }
+function toast(msg){ui.toast.textContent=msg;ui.toast.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove('show'),1500);}
+function refreshHud(){
+ ui.hp.textContent=hp+'/200';ui.hpFill.style.width=(hp/200*100)+'%';ui.armor.textContent=armor;
+ ui.ammo.textContent=ammo;ui.reserve.textContent=reserve;ui.weapon.textContent=weapons[weaponIndex].name;ui.type.textContent=weapons[weaponIndex].type;
+ ui.kills.textContent=String(kills).padStart(2,'0');ui.targets.textContent=String(bots.filter(b=>b.userData.alive).length).padStart(2,'0');
+}
+function showDamage(value,headshot,point){
+ const el=document.createElement('div');el.className='damage-number'+(headshot?' headshot':'');el.textContent=(headshot?'✦ ':'')+value+(headshot?' CAPA':'');
+ const projected=point.clone().project(camera);
+ el.style.left=((projected.x*.5+.5)*innerWidth)+'px';el.style.top=((-projected.y*.5+.5)*innerHeight)+'px';
+ ui.damage.appendChild(el);setTimeout(()=>el.remove(),900);
+}
+function switchWeapon(index){weaponIndex=(index+weapons.length)%weapons.length;ammo=weapons[weaponIndex].mag;reserve=weapons[weaponIndex].reserve;refreshHud();toast('Equipado: '+weapons[weaponIndex].name);}
+function reload(){
+ const w=weapons[weaponIndex];if(ammo>=w.capacity||reserve<=0||reloadUntil>performance.now())return;
+ reloadUntil=performance.now()+1250;toast('Recarregando...');
+ setTimeout(()=>{if(isPaused)return;const take=Math.min(w.capacity-ammo,reserve);ammo+=take;reserve-=take;reloadUntil=0;refreshHud();},1250);
+}
+function shoot(){
+ const now=performance.now(),w=weapons[weaponIndex];
+ if(isPaused||now-lastShot<w.rate||now<reloadUntil)return;
+ if(ammo<=0){toast('Sem munição — recarregue');return;}
+ lastShot=now;ammo--;refreshHud();
+ const origin=camera.position.clone();const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+ const spread=isAiming?w.spread*.45:w.spread;
+ dir.x+=(Math.random()-.5)*spread;dir.y+=(Math.random()-.5)*spread;dir.z+=(Math.random()-.5)*spread;dir.normalize();
+ raycaster.set(origin,dir);raycaster.far=55;
+ const targets=[];
+ for(const bot of bots)if(bot.userData.alive)targets.push(...bot.children);
+ const hits=raycaster.intersectObjects(targets,false);
+ if(hits.length){
+  const hit=hits[0],bot=bots.find(b=>b.children.includes(hit.object));
+  if(bot){
+   const isHead=hit.object===bot.userData.parts.head;
+   const damage=isHead?w.head:w.damage;
+   bot.userData.hp-=damage;
+   const worldPoint=hit.point.clone();showDamage(damage,isHead,worldPoint);
+   ui.hit.classList.remove('show');void ui.hit.offsetWidth;ui.hit.classList.add('show');
+   if(bot.userData.hp<=0){bot.userData.alive=false;bot.visible=false;kills++;toast(isHead?'CAPA! ALVO ELIMINADO':'ALVO ELIMINADO');}
   }
+ } else {
+  const wallHits=raycaster.intersectObjects(arena.children,false);
+ }
 }
-const landGeometry = new THREE.BufferGeometry();
-landGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-landGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-landGeometry.setIndex(indices);
-landGeometry.computeVertexNormals();
-const landMaterial = lowPower
-  ? new THREE.MeshLambertMaterial({ vertexColors: true })
-  : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .96 });
-const landMesh = new THREE.Mesh(landGeometry, landMaterial);
-scene.add(landMesh);
+function resetTraining(){
+ for(const bot of bots){bot.userData.hp=100;bot.userData.alive=true;bot.visible=true;bot.position.set(bot.userData.baseX,0,bot.userData.baseZ);}
+ player.position.set(0,0,9);hp=200;armor=100;kills=0;elapsed=0;switchWeapon(0);isPaused=false;$('pause-screen').classList.add('hidden');refreshHud();toast('Treinamento reiniciado');
+}
 
-// Vegetação e depósitos são instâncias para manter poucas chamadas de desenho.
-const treeLimit = lowPower ? 280 : 650;
-const trunkMesh = new THREE.InstancedMesh(
-  new THREE.CylinderGeometry(.16, .23, 1.65, 5),
-  new THREE.MeshLambertMaterial({ color: 0x76523a }), treeLimit
-);
-const crownMesh = new THREE.InstancedMesh(
-  new THREE.IcosahedronGeometry(1, 1),
-  new THREE.MeshLambertMaterial({ color: 0x426b45, flatShading: true }), treeLimit
-);
-const rockLimit = lowPower ? 90 : 190;
-const rockMesh = new THREE.InstancedMesh(
-  new THREE.IcosahedronGeometry(1, 1),
-  new THREE.MeshLambertMaterial({ color: 0x777d79, flatShading: true }), rockLimit
-);
-const oreMesh = new THREE.InstancedMesh(
-  new THREE.OctahedronGeometry(1, 0),
-  new THREE.MeshLambertMaterial({ color: 0x9a8874, flatShading: true }), lowPower ? 34 : 75
-);
-const dummy = new THREE.Object3D();
-let treeCount = 0, rockCount = 0, oreCount = 0;
-for (let i = 0; i < (lowPower ? 1800 : 4200); i++) {
-  const x = rand(-120, 120), z = rand(-88, 88);
-  const y = terrainAt(x, z);
-  if (y < .5) continue;
-  const biome = biomeAt(x, z, y);
-  if (biome === 'forest' && treeCount < treeLimit && random() < .75) {
-    const scale = rand(.75, 1.45);
-    dummy.position.set(x, y + .72 * scale, z);
-    dummy.scale.set(scale, scale, scale);
-    dummy.rotation.y = rand(0, Math.PI * 2);
-    dummy.updateMatrix();
-    trunkMesh.setMatrixAt(treeCount, dummy.matrix);
-    dummy.position.y = y + 1.8 * scale;
-    dummy.scale.set(.95 * scale, rand(1, 1.5) * scale, .95 * scale);
-    dummy.updateMatrix();
-    crownMesh.setMatrixAt(treeCount, dummy.matrix);
-    treeCount++;
-  } else if ((biome === 'mountain' || biome === 'tundra') && rockCount < rockLimit && random() < .28) {
-    dummy.position.set(x, y + .25, z);
-    dummy.scale.set(rand(.3, .9), rand(.25, .7), rand(.3, .8));
-    dummy.rotation.set(rand(0, 1), rand(0, 3), rand(0, 1));
-    dummy.updateMatrix();
-    rockMesh.setMatrixAt(rockCount++, dummy.matrix);
-  } else if (biome === 'mountain' && oreCount < oreMesh.count && random() < .13) {
-    dummy.position.set(x, y + .5, z);
-    dummy.scale.set(.45, rand(.55, 1.1), .45);
-    dummy.rotation.y = rand(0, 3);
-    dummy.updateMatrix();
-    oreMesh.setMatrixAt(oreCount++, dummy.matrix);
-  }
+// Camera isometric TPS, kept behind player.
+function updateCamera(){
+ const distance=isAiming?4.3:6.7;
+ const target=new THREE.Vector3(player.position.x,player.position.y+(isCrouched?1.35:1.65),player.position.z);
+ const horizontal=Math.cos(pitch)*distance;
+ camera.position.set(target.x+Math.sin(yaw)*horizontal,target.y+Math.sin(-pitch)*distance+1.05,target.z+Math.cos(yaw)*horizontal);
+ camera.lookAt(target.x-Math.sin(yaw)*1.8,target.y+.12,target.z-Math.cos(yaw)*1.8);
 }
-trunkMesh.count = treeCount;
-crownMesh.count = treeCount;
-rockMesh.count = rockCount;
-oreMesh.count = oreCount;
-scene.add(trunkMesh, crownMesh, rockMesh, oreMesh);
+function movePlayer(dt){
+ const forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joyY;
+ const side=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joyX;
+ const len=Math.hypot(forward,side);isMoving=len>.08;
+ if(len>.08){
+  const f=forward/Math.max(1,len),s=side/Math.max(1,len);
+  const speed=(keys.ShiftLeft?8.5:5.2)*(isCrouched?.48:1);
+  const dx=(Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt;
+  const dz=(Math.cos(yaw)*f-Math.sin(yaw)*s)*speed*dt;
+  player.position.x=THREE.MathUtils.clamp(player.position.x+dx,-21,21);
+  player.position.z=THREE.MathUtils.clamp(player.position.z+dz,-21,21);
+  player.rotation.y=yaw+Math.atan2(s,f);
+ }
+ verticalVelocity-=19*dt;player.position.y=Math.max(0,player.position.y+verticalVelocity*dt);
+ if(player.position.y===0){verticalVelocity=0;onGround=true;}
+}
+function animateBots(t){
+ for(const bot of bots){if(!bot.userData.alive)continue;const p=bot.userData.phase;bot.position.x=bot.userData.baseX+Math.sin(t*.55+p)*.55;bot.position.z=bot.userData.baseZ+Math.cos(t*.42+p)*.35;bot.rotation.y=Math.atan2(player.position.x-bot.position.x,player.position.z-bot.position.z);}
+}
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.04);
+ if(!isPaused){
+  elapsed+=dt;const mins=String(Math.floor(elapsed/60)).padStart(2,'0'),secs=String(Math.floor(elapsed%60)).padStart(2,'0');ui.timer.textContent=mins+':'+secs;
+  movePlayer(dt);animateBots(elapsed);
+ }
+ updateCamera();renderer.render(scene,camera);
+}
+let joyX=0,joyY=0,joyPointer=null;
+const joystick=$('joystick'),knob=$('joy-knob');
+function setJoy(e){const r=joystick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=r.width*.34,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}joyX=dx/max;joyY=dy/max;knob.style.transform='translate('+dx+'px,'+dy+'px)';}
+joystick.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;joystick.setPointerCapture(e.pointerId);setJoy(e);});
+joystick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)setJoy(e);});
+function endJoy(){joyPointer=null;joyX=joyY=0;knob.style.transform='translate(0,0)';}
+joystick.addEventListener('pointerup',endJoy);joystick.addEventListener('pointercancel',endJoy);
 
-const seedLabel = document.querySelector('#world-seed');
-if (seedLabel) seedLabel.textContent = WORLD_SEED.toString();
-const biomeLabel = document.querySelector('#world-biomes');
-if (biomeLabel) biomeLabel.textContent = '6 continentes · 5 biomas';
-const resourceLabel = document.querySelector('#world-resources');
-if (resourceLabel) resourceLabel.textContent = `${treeCount} árvores · ${rockCount} rochas · ${oreCount} minérios`;
-
-let frameId = 0;
-function render() {
-  frameId = 0;
-  if (document.hidden) return;
-  controls.update();
-  renderer.render(scene, camera);
-}
-function invalidate() {
-  if (!document.hidden && frameId === 0) frameId = requestAnimationFrame(render);
-}
-controls.addEventListener('change', invalidate);
-function resize() {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
-  invalidate();
-}
-addEventListener('resize', resize, { passive: true });
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    if (frameId) cancelAnimationFrame(frameId);
-    frameId = 0;
-  } else invalidate();
+let lookPointer=null,lastLookX=0,lastLookY=0;
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='mouse'&&e.button===0){if(!isMobile)shoot();return;}
+ if(isMobile&&e.clientX>innerWidth*.35){lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);}
 });
-invalidate();
-
-
-const authScreen = document.querySelector('#auth-screen');
-const gameUI = document.querySelector('#game-ui');
-const authForm = document.querySelector('#auth-form');
-const authMessage = document.querySelector('#auth-message');
-const authSubmit = document.querySelector('#auth-submit');
-const loadingDetail = document.querySelector('#loading-detail');
-const VISITOR_KEY = 'empire-online-visitor';
-let authMode = 'login';
-
-document.querySelectorAll('.auth-tab').forEach(tab => tab.addEventListener('click', () => {
-  authMode = tab.dataset.mode;
-  document.querySelectorAll('.auth-tab').forEach(item => item.classList.toggle('active', item === tab));
-  authSubmit.innerHTML = authMode === 'login' ? 'ENTRAR NO JOGO <span>↗</span>' : 'CRIAR MINHA CONTA <span>↗</span>';
-  document.querySelector('#password').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
-  authMessage.textContent = authMode === 'login' ? 'Entre para continuar sua jornada.' : 'Crie seu acesso para guardar sua civilização.';
-}));
-
-authForm.addEventListener('submit', event => {
-  event.preventDefault();
-  authMessage.textContent = 'O login real ainda será conectado ao servidor. Use o acesso de visitante para testar esta versão.';
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(!isMobile&&!isPaused&&document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0024;pitch=THREE.MathUtils.clamp(pitch+e.movementY*.0018,-.55,.35);}
+ if(e.pointerId===lookPointer){yaw-=(e.clientX-lastLookX)*.006;pitch=THREE.MathUtils.clamp(pitch+(e.clientY-lastLookY)*.004,-.55,.35);lastLookX=e.clientX;lastLookY=e.clientY;}
 });
-
-function enterWorld() {
-  loadingDetail.textContent = 'Carregando terreno, biomas e recursos...';
-  loading.classList.remove('hidden', 'fade');
-  setTimeout(() => {
-    authScreen.classList.add('hidden');
-    gameUI.classList.remove('hidden');
-    document.querySelector('.intro')?.classList.add('hidden');
-    document.querySelector('.world-panel')?.classList.add('hidden');
-    document.querySelector('.hud')?.classList.add('hidden');
-    document.querySelector('.bottom-note')?.classList.add('hidden');
-    loading.classList.add('fade');
-    setTimeout(() => loading.classList.add('hidden'), 600);
-  }, 1500);
-}
-
-document.querySelector('#guest-entry').addEventListener('click', () => {
-  try { localStorage.setItem(VISITOR_KEY, '1'); } catch {}
-  enterWorld();
-});
-
-const alreadyEntered = (() => {
-  try { return localStorage.getItem(VISITOR_KEY) === '1'; } catch { return false; }
-})();
-setTimeout(() => {
-  loading.classList.add('fade');
-  setTimeout(() => {
-    loading.classList.add('hidden');
-    if (!alreadyEntered) authScreen.classList.remove('hidden');
-  }, 550);
-}, 1600);
-
-const pageCopy = {
-  lobby: ['BEM-VINDO AO CAMPO DE BATALHA', 'Sua próxima partida<br><em>começa aqui.</em>', 'Prepare seu personagem, escolha um modo e entre em uma partida. A vitória começa antes da queda.'],
-  character: ['PERSONAGEM', 'Prepare seu<br><em>combatente.</em>', 'Aqui você poderá personalizar aparência, roupas e itens visuais do seu personagem.'],
-  arsenal: ['ARSENAL', 'Seu equipamento<br><em>para a partida.</em>', 'Aqui ficará a seleção e personalização visual dos equipamentos do jogo.'],
-  collection: ['COLEÇÃO', 'Suas conquistas<br><em>e recompensas.</em>', 'Acompanhe itens cosméticos, recompensas e conquistas desbloqueadas.'],
-  store: ['LOJA', 'Novidades da<br><em>temporada.</em>', 'A loja terá itens cosméticos e conteúdos opcionais. Nenhuma compra está ativa nesta versão.']
-};
-document.querySelectorAll('.nav-item').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item === button));
-  const [kicker, title, lead] = pageCopy[button.dataset.page];
-  const page = document.querySelector('#game-page');
-  page.querySelector('.page-kicker').textContent = kicker;
-  page.querySelector('h2').innerHTML = title;
-  page.querySelector('.page-lead').textContent = lead;
-  document.querySelector('.mode-grid').classList.toggle('hidden', button.dataset.page !== 'lobby');
-  document.querySelector('.world-summary').classList.toggle('hidden', button.dataset.page !== 'lobby');
-  document.querySelector('.start-card').classList.toggle('hidden', button.dataset.page !== 'lobby');
-  document.querySelector('#game-feedback').textContent = button.dataset.page === 'lobby'
-    ? 'Escolha um modo de jogo. Esta versão ainda é um protótipo visual.'
-    : 'Esta seção é uma prévia da interface. Os sistemas serão implementados por etapas.';
-}));
-let selectedMode = 'battle';
-document.querySelectorAll('.mode-card').forEach(card => card.addEventListener('click', () => {
-  selectedMode = card.dataset.mode;
-  document.querySelectorAll('.mode-card').forEach(item => item.classList.toggle('selected', item === card));
-  document.querySelector('#selected-mode-title').textContent = selectedMode === 'battle' ? 'Battle Royale' : 'Ranquiada';
-  document.querySelector('#game-feedback').textContent = selectedMode === 'battle' ? 'Modo clássico selecionado.' : 'Modo ranquiado selecionado.';
-}));
-document.querySelector('#start-match').addEventListener('click', () => {
-  document.querySelector('#game-feedback').textContent = 'O sistema de matchmaking ainda não foi implementado. Primeiro vamos construir a movimentação e o mapa de batalha.';
-});
-document.querySelector('#game-menu').addEventListener('click', () => {
-  document.querySelector('.game-sidebar').classList.toggle('mobile-open');
-});
+renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerId===lookPointer)lookPointer=null;});
+renderer.domElement.addEventListener('click',()=>{if(!isMobile&&!isPaused)renderer.domElement.requestPointerLock?.();});
+$('fire-btn').addEventListener('pointerdown',e=>{e.preventDefault();shoot();});
+$('reload-btn').addEventListener('click',reload);
+$('weapon-btn').addEventListener('click',()=>switchWeapon(weaponIndex+1));
+$('jump-btn').addEventListener('click',()=>{if(onGround&&!isPaused){verticalVelocity=7.2;onGround=false;}});
+$('crouch-btn').addEventListener('click',()=>{isCrouched=!isCrouched;$('crouch-btn').classList.toggle('active',isCrouched);});
+$('aim-btn').addEventListener('click',()=>{isAiming=!isAiming;$('aim-btn').classList.toggle('active',isAiming);});
+$('pause-btn').addEventListener('click',()=>{isPaused=true;$('pause-screen').classList.remove('hidden');});
+$('resume-btn').addEventListener('click',()=>{isPaused=false;$('pause-screen').classList.add('hidden');});
+$('reset-btn').addEventListener('click',resetTraining);
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'&&onGround){verticalVelocity=7.2;onGround=false;}if(e.code==='KeyR')reload();if(e.code==='Digit1')switchWeapon(0);if(e.code==='Digit2')switchWeapon(1);if(e.code==='Digit3')switchWeapon(2);if(e.code==='Escape'){isPaused=!isPaused;$('pause-screen').classList.toggle('hidden',!isPaused);}});
+window.addEventListener('keyup',e=>keys[e.code]=false);
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPower?1:1.5));});
+refreshHud();updateCamera();animate();
+setTimeout(()=>$('boot-screen').classList.add('gone'),850);
