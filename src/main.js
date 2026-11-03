@@ -95,7 +95,7 @@ function makeBot(x,z,index){
  const botHead=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10),skinMat); botHead.position.y=2.04; group.add(botHead);
  const cap=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI*.55),mat(0x283e48)); cap.position.y=2.1; group.add(cap);
  const plate=new THREE.Mesh(new THREE.BoxGeometry(1.05,.09,.08),mat(0x5a342a)); plate.position.set(0,2.42,0); group.add(plate);
- group.userData={hp:100,alive:true,parts:{head:botHead,chest:torso},index,baseX:x,baseZ:z,phase:index*1.7};
+ group.userData={hp:100,alive:true,parts:{head:[botHead,cap],chest:torso},index,baseX:x,baseZ:z,phase:index*1.7};
  bots.push(group);
 }
 [[-8,-14],[8,-14],[-17,0],[17,0],[-8,15],[8,15]].forEach((p,i)=>makeBot(p[0],p[1],i));
@@ -139,7 +139,7 @@ function shoot(){
  if(hits.length){
   const hit=hits[0],bot=bots.find(b=>b.children.includes(hit.object));
   if(bot){
-   const isHead=hit.object===bot.userData.parts.head;
+   const isHead=bot.userData.parts.head.includes(hit.object);
    const damage=isHead?w.head:w.damage;
    bot.userData.hp-=damage;
    const worldPoint=hit.point.clone();showDamage(damage,isHead,worldPoint);
