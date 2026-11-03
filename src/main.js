@@ -6,8 +6,8 @@ const isMobile = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPo
 const cores = navigator.hardwareConcurrency || 4;
 const lowPower = isMobile || cores <= 4 || (navigator.deviceMemory || 4) <= 4;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9bb1b3);
-scene.fog = new THREE.Fog(0x9bb1b3, 34, 105);
+scene.background = new THREE.Color(0x738b8b);
+scene.fog = new THREE.Fog(0x738b8b, 42, 115);
 
 const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 150);
 const renderer = new THREE.WebGLRenderer({ antialias: !lowPower, powerPreference: 'low-power', alpha: false });
@@ -49,7 +49,7 @@ scene.add(floor);
 
 const arena = new THREE.Group();
 scene.add(arena);
-const wallMat = mat(0x777c78);
+const wallMat = mat(0xffffff);wallMat.map=stoneTexture;wallMat.map.repeat.set(2,1);
 const trimMat = mat(0xc1a66f, .7);
 function block(x,y,z,sx,sy,sz,material,group=arena) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz), material);
@@ -74,25 +74,57 @@ grid.position.y=.012; scene.add(grid);
 const centerRing = new THREE.Mesh(new THREE.RingGeometry(5.8,6,.6,64), new THREE.MeshBasicMaterial({color:0xd8bd7e,side:THREE.DoubleSide}));
 centerRing.rotation.x=-Math.PI/2; centerRing.position.y=.025; scene.add(centerRing);
 
+// Coberturas, caixas e rochas para dar escala e leitura visual à arena.
+const woodTexture=proceduralTexture('#594431','#c49a62','wood');woodTexture.repeat.set(1,1);
+const woodMat=mat(0xffffff);woodMat.map=woodTexture;
+const cratePositions=[[-17,-11],[17,-11],[-17,11],[17,11],[-5,-21],[5,-21],[-5,21],[5,21]];
+for(const [x,z] of cratePositions){
+ const crate=new THREE.Group();crate.position.set(x,.65,z);arena.add(crate);
+ const base=new THREE.Mesh(new THREE.BoxGeometry(1.55,1.3,1.35),woodMat);base.castShadow=!lowPower;base.receiveShadow=true;crate.add(base);
+ const strapMat=mat(0x293334,.55,.25);
+ for(const xx of [-.48,.48]){const strap=new THREE.Mesh(new THREE.BoxGeometry(.09,1.34,1.38),strapMat);crate.add(strap);}
+ const top=new THREE.Mesh(new THREE.BoxGeometry(1.6,.08,1.4),trimMat);top.position.y=.68;crate.add(top);
+}
+const rockMat=mat(0x656b61);
+for(let i=0;i<(lowPower?10:18);i++){
+ const a=i*2.399,r=27+(i%3)*2;
+ const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.8+(i%4)*.22,0),rockMat);
+ rock.position.set(Math.cos(a)*r,.35,Math.sin(a)*r);rock.scale.y=.55;rock.rotation.set(i*.2,i*.7,i*.3);rock.castShadow=!lowPower;arena.add(rock);
+}
+const coverMat=mat(0x8c8878);
+for(const [x,z] of [[-7,-7],[7,-7],[-7,7],[7,7]]){
+ for(let n=0;n<4;n++){const bag=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.48,3,6),coverMat);bag.rotation.z=Math.PI/2;bag.position.set(x+(n-1.5)*.72,.42,z);bag.castShadow=!lowPower;arena.add(bag);}
+}
+
+
 // Player model
 const player = new THREE.Group(); scene.add(player);
 const bodyMat=mat(0x273c49), vestMat=mat(0x596c58), skinMat=mat(0xc99772), darkMat=mat(0x18232a), helmetMat=mat(0x344b55,.45,.25);
 const skinPalette=[{name:'OPERADOR TÁTICO',vest:0x596c58,body:0x273c49},{name:'ÁRTICO',vest:0x547b91,body:0x263e52},{name:'INFERNO',vest:0x8d4239,body:0x42252a},{name:'SOMBRA',vest:0x343b43,body:0x171d25}];
-let equippedSkin=Number(localStorage.getItem('empire-skin')||0);
+let equippedSkin=Math.max(0,Math.min(3,Number(localStorage.getItem('empire-skin')||0)));
 function applySkin(index){equippedSkin=(index+skinPalette.length)%skinPalette.length;const s=skinPalette[equippedSkin];vestMat.color.setHex(s.vest);bodyMat.color.setHex(s.body);localStorage.setItem('empire-skin',String(equippedSkin));const name=document.getElementById('skin-name');if(name)name.textContent=s.name;document.querySelectorAll('.skin-option').forEach((b,i)=>b.classList.toggle('selected',i===equippedSkin));}
+window.addEventListener('empire:skinchange',e=>applySkin(Number(e.detail)||0));
 
 const body = new THREE.Mesh(new THREE.CapsuleGeometry(.43,.72,4,8),vestMat); body.position.y=1.35; body.castShadow=!lowPower; player.add(body);
 const chest = new THREE.Mesh(new THREE.BoxGeometry(.78,.58,.48),bodyMat); chest.position.set(0,1.48,0); player.add(chest);
 const head = new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),skinMat); head.position.y=2.05; player.add(head);
 const helmet = new THREE.Mesh(new THREE.SphereGeometry(.3,12,8,0,Math.PI*2,0,Math.PI*.55),helmetMat); helmet.position.y=2.1; player.add(helmet);
+const playerLegs=[],playerArms=[];
 const legGeo=new THREE.CapsuleGeometry(.17,.58,3,6);
-for(const x of [-.22,.22]) { const leg=new THREE.Mesh(legGeo,darkMat); leg.position.set(x,.48,0); player.add(leg); }
+for(const x of [-.22,.22]) { const leg=new THREE.Mesh(legGeo,darkMat); leg.position.set(x,.48,0); player.add(leg);playerLegs.push(leg); }
 const armGeo=new THREE.CapsuleGeometry(.13,.55,3,6);
-for(const x of [-.53,.53]) { const arm=new THREE.Mesh(armGeo,vestMat); arm.position.set(x,1.42,0); arm.rotation.z=x*.35; player.add(arm); }
+for(const x of [-.53,.53]) { const arm=new THREE.Mesh(armGeo,vestMat); arm.position.set(x,1.42,0); arm.rotation.z=x*.35; player.add(arm);playerArms.push(arm); }
+const pack=new THREE.Mesh(new THREE.BoxGeometry(.48,.68,.28),darkMat);pack.position.set(0,1.43,.34);player.add(pack);
+for(const x of [-.25,.25]){const pouch=new THREE.Mesh(new THREE.BoxGeometry(.2,.24,.16),helmetMat);pouch.position.set(x,1.34,-.27);player.add(pouch);const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),vestMat);shoulder.position.set(x*2.1,1.68,0);player.add(shoulder);}
+const belt=new THREE.Mesh(new THREE.BoxGeometry(.72,.12,.5),darkMat);belt.position.y=1.02;player.add(belt);
 const gun = new THREE.Group(); player.add(gun);
 const gunBody = new THREE.Mesh(new THREE.BoxGeometry(.16,.17,.82),darkMat); gunBody.position.set(.42,1.46,-.52); gun.add(gunBody);
 const gunBarrel = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.46,8),helmetMat); gunBarrel.rotation.x=Math.PI/2; gunBarrel.position.set(.42,1.47,-1.12); gun.add(gunBarrel);
-player.position.set(0,0,9);
+const gunStock=new THREE.Mesh(new THREE.BoxGeometry(.14,.16,.32),darkMat);gunStock.position.set(.42,1.46,-.12);gun.add(gunStock);
+const gunMag=new THREE.Mesh(new THREE.BoxGeometry(.12,.28,.17),helmetMat);gunMag.position.set(.42,1.25,-.58);gunMag.rotation.x=-.12;gun.add(gunMag);
+const gunSight=new THREE.Mesh(new THREE.BoxGeometry(.09,.12,.12),trimMat);gunSight.position.set(.42,1.59,-.68);gun.add(gunSight);
+const foreGrip=new THREE.Mesh(new THREE.BoxGeometry(.1,.2,.12),darkMat);foreGrip.position.set(.42,1.3,-.82);gun.add(foreGrip);
+player.position.set(2.8,0,9);
 
 const weapons=[
  {name:'RIFLE',type:'AR · AUTOMÁTICO',mag:30,reserve:120,capacity:30,damage:24,head:96,rate:125,spread:.018},
@@ -112,6 +144,9 @@ function makeBot(x,z,index){
  const botBody=new THREE.Mesh(new THREE.CapsuleGeometry(.4,.7,4,8),mat(index%2?0x8b6548:0x576c74)); botBody.position.y=1.32; botBody.castShadow=!lowPower; group.add(botBody);
  const torso=new THREE.Mesh(new THREE.BoxGeometry(.72,.62,.44),mat(0x35454b)); torso.position.y=1.42; group.add(torso);
  const botHead=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10),skinMat); botHead.position.y=2.04; group.add(botHead);
+ const botLimbMat=mat(index%2?0x4b514c:0x293b42);for(const sx of [-.48,.48]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,3,6),botLimbMat);arm.position.set(sx,1.38,0);group.add(arm);const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.15,.52,3,6),darkMat);leg.position.set(sx*.48,.47,0);group.add(leg);}
+ const backpack=new THREE.Mesh(new THREE.BoxGeometry(.42,.62,.22),darkMat);backpack.position.set(0,1.4,.32);group.add(backpack);
+ for(const sx of [-.23,.23]){const pouch=new THREE.Mesh(new THREE.BoxGeometry(.18,.2,.14),helmetMat);pouch.position.set(sx,1.36,-.25);group.add(pouch);}
  const cap=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8,0,Math.PI*2,0,Math.PI*.55),mat(0x283e48)); cap.position.y=2.1; group.add(cap);
  const plate=new THREE.Mesh(new THREE.BoxGeometry(1.05,.09,.08),mat(0x5a342a)); plate.position.set(0,2.42,0); group.add(plate);
  group.userData={hp:100,alive:true,parts:{head:[botHead,cap],chest:torso},index,baseX:x,baseZ:z,phase:index*1.7};
@@ -205,7 +240,8 @@ function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04);
  if(!isPaused){
-  elapsed+=dt;const mins=String(Math.floor(elapsed/60)).padStart(2,'0'),secs=String(Math.floor(elapsed%60)).padStart(2,'0');ui.timer.textContent=mins+':'+secs;
+  elapsed+=dt;
+  const gait=isMoving?Math.sin(elapsed*11)*.42:Math.sin(elapsed*1.5)*.025;playerLegs[0].rotation.x=gait;playerLegs[1].rotation.x=-gait;playerArms[0].rotation.x=-gait*.55;playerArms[1].rotation.x=gait*.55;const mins=String(Math.floor(elapsed/60)).padStart(2,'0'),secs=String(Math.floor(elapsed%60)).padStart(2,'0');ui.timer.textContent=mins+':'+secs;
   movePlayer(dt);animateBots(elapsed);
  }
  updateCamera();renderer.render(scene,camera);
@@ -242,11 +278,3 @@ window.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'&&onG
 window.addEventListener('keyup',e=>keys[e.code]=false);
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPower?1:1.5));});
 refreshHud();applySkin(equippedSkin);updateCamera();animate();
-const menu=$('main-menu');
-$('play-btn').addEventListener('click',()=>{menu.classList.add('menu-hidden');toast('Treinamento iniciado');});
-$('open-skins').addEventListener('click',()=>$('skins-panel').classList.remove('hidden'));
-$('open-settings').addEventListener('click',()=>$('settings-panel').classList.remove('hidden'));
-document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.add('hidden')));
-document.querySelectorAll('[data-skin]').forEach(b=>b.addEventListener('click',()=>applySkin(Number(b.dataset.skin))));
-$('menu-btn').addEventListener('click',()=>{isPaused=false;$('pause-screen').classList.add('hidden');menu.classList.remove('menu-hidden');});
-(()=>$('boot-screen').classList.add('gone'),850);
