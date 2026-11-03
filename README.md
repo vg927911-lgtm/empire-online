@@ -1,40 +1,47 @@
 # Empire Online
 
-A persistent multiplayer civilization simulation game.
+Protótipo web de tiro em terceira pessoa (TPS), com foco em celulares e controles touch.
 
-## Visão do projeto
+## O que já funciona
 
-Empire Online é um mundo 3D compartilhado no qual os jogadores constroem sociedades ao longo do tempo. A história deve surgir das decisões dos jogadores, dos recursos disponíveis e das condições do mundo — não de personagens históricos famosos surgindo por roteiro.
+- Arena 3D compacta de treinamento, com ruínas, coberturas e alvos.
+- Câmera TPS atrás do personagem.
+- Movimento por teclado no computador e analógico virtual no celular.
+- Controle de câmera por mouse ou arraste na tela.
+- Rifle, pistola e shotgun com troca de arma e recarga.
+- Alvos de treino com hitbox de peito e cabeça.
+- Dano numérico flutuante e indicação de CAPA (headshot).
+- HUD com vida, colete, munição, minimapa ilustrativo, tempo e eliminações.
+- Pulo, agachar, mirar, pausar e reiniciar treinamento.
+- Ajustes automáticos de qualidade para aparelhos móveis e hardware modesto.
 
-## Primeiro marco: protótipo de uma ilha
+## Executar no Termux
 
-O primeiro objetivo é pequeno e concreto: criar uma ilha 3D explorável, gerada proceduralmente, com terreno orgânico, água, árvores e rochas. O foco inicial é fazer esse mundo funcionar bem antes de adicionar sistemas complexos de civilização ou multiplayer.
+Requer Node.js instalado.
 
-## Tecnologias planejadas
+```sh
+git pull
+npm install
+npm run dev -- --host 0.0.0.0
+```
 
-- **Vite + JavaScript** — estrutura e execução do projeto web.
-- **Three.js** — renderização 3D do mundo.
-- **Node.js + WebSockets** — multiplayer, em uma etapa posterior.
-- **Supabase + PostgreSQL** — contas e persistência, em uma etapa posterior.
-- **Render** — hospedagem, quando houver uma versão pronta para publicar.
+Abra no navegador do próprio aparelho o endereço local exibido pelo Vite. Para acessar por outro dispositivo na mesma rede, use o endereço de rede informado no terminal.
 
-## Princípios de desenvolvimento
+## Controles
 
-1. Construir em etapas pequenas e testáveis.
-2. Priorizar formas naturais e orgânicas, evitando aparência de blocos.
-3. Fazer o mundo persistir entre sessões quando a camada de dados for implementada.
-4. Deixar que a história emerja das ações dos jogadores e das gerações seguintes.
-5. Não adicionar sistemas grandes antes de o protótipo básico estar funcionando.
+### Celular
+- Analógico esquerdo: movimentar.
+- Arrastar no lado direito: girar a câmera.
+- Botões na tela: atirar, mirar, pular, agachar, recarregar e trocar arma.
 
-## Estado atual
+### Computador
+- WASD ou setas: movimentar.
+- Mouse: mirar e atirar.
+- Espaço: pular.
+- Shift: correr.
+- R: recarregar.
+- 1, 2 e 3: trocar arma.
 
-- [x] Repositório criado.
-- [x] Visão inicial documentada.
-- [ ] Protótipo 3D da ilha.
-- [ ] Controles de câmera e exploração.
-- [ ] Sistemas de recursos e coleta.
-- [ ] Persistência e multiplayer.
+## Limites desta versão
 
-## Execução local
-
-As instruções serão adicionadas junto com os primeiros arquivos executáveis do protótipo.
+Este é um protótipo local single-player. Os alvos são bots de treinamento; ainda não há matchmaking, partidas online, contas, salvamento em servidor ou multiplayer. O minimapa é ilustrativo. O projeto usa Vite e Three.js.
