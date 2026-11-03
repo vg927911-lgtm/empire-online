@@ -11,6 +11,17 @@
   <div id="app">
     <div id="game-root"></div>
     <div id="boot-screen"><div class="boot-logo">E</div><b>EMPIRE ONLINE</b><span>PREPARANDO ARENA...</span><div class="boot-bar"><i></i></div></div>
+    <section id="main-menu" class="main-menu">
+      <div class="menu-backdrop"></div>
+      <header class="menu-top"><div class="brand"><b class="brand-icon">E</b><div><strong>EMPIRE ONLINE</strong><small>OPERAÇÃO ZERO · TEMPORADA 01</small></div></div><div class="profile-chip"><span class="profile-orb">R</span><span><b>RECRUTA</b><small>CONTA LOCAL</small></span><i>NV. 01</i></div></header>
+      <div class="menu-content"><div class="menu-kicker"><i></i> CAMPO DE OPERAÇÕES</div><h1>DOMINE<br><em>A ARENA.</em></h1><p class="menu-copy">Treine sua mira. Escolha seu equipamento.<br>Mostre do que você é capaz.</p>
+        <div class="menu-actions"><button id="play-btn" class="menu-play"><span>▶</span><b>JOGAR AGORA</b><small>MODO TREINAMENTO</small></button><button id="open-skins" class="menu-secondary"><span>◈</span> PERSONALIZAR</button><button id="open-settings" class="menu-secondary"><span>⚙</span> CONFIGURAÇÕES</button></div>
+        <div class="menu-season"><div><small>SEU PROGRESSO</small><b><span id="menu-kills">00</span> ELIMINAÇÕES</b></div><div class="season-line"><i></i></div><span>RECRUTA I</span></div>
+      </div>
+      <div class="menu-bottom"><span>EMPIRE ONLINE <i>© 2026</i></span><span>BUILD 0.2.0 · MOBILE FIRST</span></div>
+      <div id="skins-panel" class="menu-modal hidden"><div class="modal-head"><div><small>PERSONALIZAÇÃO</small><h2>ESCOLHA SUA SKIN</h2></div><button class="modal-close" data-close="skins-panel">×</button></div><div class="skin-preview"><div class="skin-silhouette"><span></span></div><div><b id="skin-name">OPERADOR TÁTICO</b><small>VISUAL DE COMBATE</small></div></div><div class="skin-options"><button data-skin="0" class="skin-option selected"><i class="skin-swatch s0"></i><b>OLIVA</b><small>PADRÃO</small></button><button data-skin="1" class="skin-option"><i class="skin-swatch s1"></i><b>ÁRTICO</b><small>AZUL</small></button><button data-skin="2" class="skin-option"><i class="skin-swatch s2"></i><b>INFERNO</b><small>VERMELHO</small></button><button data-skin="3" class="skin-option"><i class="skin-swatch s3"></i><b>SOMBRA</b><small>PRETO</small></button></div><button class="menu-play modal-done" data-close="skins-panel"><b>EQUIPAR SKIN</b></button></div>
+      <div id="settings-panel" class="menu-modal hidden"><div class="modal-head"><div><small>SISTEMA</small><h2>CONFIGURAÇÕES</h2></div><button class="modal-close" data-close="settings-panel">×</button></div><div class="setting-row"><span><b>QUALIDADE GRÁFICA</b><small>Ajuste automático para seu aparelho</small></span><strong id="quality-label">OTIMIZADA</strong></div><div class="setting-row"><span><b>CONTROLES</b><small>Analógico + câmera por toque</small></span><strong>MOBILE</strong></div><div class="setting-row"><span><b>ÁUDIO</b><small>Áudio ainda não disponível nesta versão</small></span><strong>EM BREVE</strong></div><button class="menu-play modal-done" data-close="settings-panel"><b>VOLTAR</b></button></div>
+    </section>
     <header class="top-hud">
       <div class="brand"><b class="brand-icon">E</b><div><strong>EMPIRE ONLINE</strong><small>ARENA DE TREINAMENTO</small></div></div>
       <div class="match-info"><span class="live-dot"></span> TREINO <i>•</i> <span id="timer">00:00</span></div>
@@ -33,7 +44,7 @@
     </div>
     <div class="mobile-controls"><div id="joystick" class="joystick"><div class="joy-ring"></div><div id="joy-knob" class="joy-knob"></div></div><div class="look-hint">DESLIZE PARA GIRAR A CÂMERA</div></div>
     <div class="desktop-hint">WASD mover · Mouse mirar · Clique atirar · Espaço pular · Shift correr · R recarregar · 1/2 trocar arma</div>
-    <div id="pause-screen" class="overlay hidden"><div class="pause-card"><b class="brand-icon">E</b><p class="eyebrow">EMPIRE ONLINE</p><h2>PARTIDA PAUSADA</h2><p>O treinamento está esperando você.</p><button id="resume-btn" class="primary">CONTINUAR</button><button id="reset-btn" class="secondary">REINICIAR TREINO</button></div></div>
+    <div id="pause-screen" class="overlay hidden"><div class="pause-card"><b class="brand-icon">E</b><p class="eyebrow">EMPIRE ONLINE</p><h2>PARTIDA PAUSADA</h2><p>O treinamento está esperando você.</p><button id="resume-btn" class="primary">CONTINUAR</button><button id="reset-btn" class="secondary">REINICIAR TREINO</button><button id="menu-btn" class="secondary">VOLTAR AO MENU</button></div></div>
     <div id="toast" class="toast"></div>
     <div class="mode-label">MODO TREINAMENTO <span>•</span> DANO DE PEITO E CAPACETE</div>
   </div>
