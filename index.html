@@ -1,16 +1,42 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#101b24"><meta name="description" content="Empire Online — um mundo persistente de civilizações."><title>Empire Online</title></head><body><div id="app">
-<main id="world" aria-label="Mundo 3D de Empire Online"></main>
-<section class="intro"><p class="eyebrow">SEMENTE DO MUNDO <span id="world-seed">...</span></p><h1>Um planeta.<br><em>Histórias por nascer.</em></h1><p class="description">Explore continentes, biomas e recursos naturais. Este é o primeiro mapa procedural de Empire Online.</p><div class="controls"><span><b>ARRASTAR</b> girar câmera</span><span><b>PINÇAR</b> aproximar</span></div></section>
-<header class="hud"><div class="brand"><span class="brand-mark">E</span><div><strong>EMPIRE ONLINE</strong><small>MUNDO 001 · ERA PRÉ-CIVILIZAÇÃO</small></div></div><div class="status"><span></span> MUNDO GERADO</div></header>
-<aside class="world-panel"><div class="panel-heading">DADOS DO MUNDO</div><div id="world-biomes">Gerando biomas...</div><div id="world-resources">Distribuindo recursos...</div><div class="panel-foot">MAPA PROCEDURAL · PROTÓTIPO 0.4</div></aside><div class="bottom-note">MUNDO 001 <span>•</span> EXPLORAÇÃO</div>
-<div id="loading" class="loading"><div class="loading-content"><div class="loading-mark">E</div><p class="loading-title">EMPIRE ONLINE</p><p class="loading-detail" id="loading-detail">Inicializando o mundo...</p><div class="loading-track"><span></span></div><small>SUA PARTIDA. SUA ESTRATÉGIA. SUA VITÓRIA.</small></div></div>
-<section id="auth-screen" class="auth-screen hidden"><div class="auth-card"><div class="auth-logo">E</div><p class="auth-kicker">SUA PRÓXIMA PARTIDA COMEÇA AQUI</p><h2>EMPIRE <span>ONLINE</span></h2><p class="auth-subtitle">Entre no campo de batalha e dispute a vitória.</p><div class="auth-tabs"><button class="auth-tab active" type="button" data-mode="login">Entrar</button><button class="auth-tab" type="button" data-mode="register">Criar conta</button></div>
-<form id="auth-form"><label for="email">E-mail</label><input id="email" name="email" type="email" placeholder="voce@email.com" autocomplete="email" required><label for="password">Senha</label><input id="password" name="password" type="password" placeholder="Sua senha" autocomplete="current-password" minlength="6" required><button class="primary-button" type="submit" id="auth-submit">ENTRAR NO JOGO <span>↗</span></button></form><p id="auth-message" class="auth-message" role="status">Entre para continuar sua jornada.</p><div class="auth-separator"><span>OU</span></div><button id="guest-entry" class="guest-button" type="button">Jogar como visitante</button><p class="auth-legal">Sua escolha de visitante fica lembrada neste navegador. Progresso ainda não é salvo.</p></div><div class="auth-footer">UM PLANETA. MILHARES DE HISTÓRIAS.</div></section>
-<section id="game-ui" class="game-ui hidden">
-<header class="game-topbar"><div class="game-brand"><span class="brand-mark">E</span><div><strong>EMPIRE ONLINE</strong><small>BATTLE ROYALE · TEMPORADA 0</small></div></div><div class="empire-status"><span class="online-dot"></span> SERVIDORES EM DESENVOLVIMENTO</div><button id="game-menu" class="menu-button" type="button" aria-label="Abrir menu">☰</button></header>
-<aside class="game-sidebar"><p class="side-caption">MENU PRINCIPAL</p><button class="nav-item active" data-page="lobby">⌂ <span>Lobby</span></button><button class="nav-item" data-page="character">♙ <span>Personagem</span></button><button class="nav-item" data-page="arsenal">▤ <span>Arsenal</span></button><button class="nav-item" data-page="collection">◇ <span>Coleção</span></button><button class="nav-item" data-page="store">▣ <span>Loja</span></button><div class="sidebar-bottom"><div class="tribe-avatar">P</div><div><strong>JOGADOR</strong><small>Recruta · Nível 1</small></div></div></aside>
-<div class="game-content"><div class="resource-strip"><div><small>OURO</small><strong>0 <i>moedas</i></strong></div><div><small>DIAMANTES</small><strong>0 <i>cristais</i></strong></div><div><small>NÍVEL</small><strong>1 <i>iniciante</i></strong></div><div><small>RANK</small><strong>— <i>sem liga</i></strong></div></div>
-<section id="game-page" class="game-page"><p class="page-kicker">BEM-VINDO AO CAMPO DE BATALHA</p><h2>Sua próxima partida<br><em>começa aqui.</em></h2><p class="page-lead">Prepare seu personagem, escolha um modo e entre em uma partida. A vitória começa antes da queda.</p><div class="mode-grid"><button class="mode-card selected" data-mode="battle" type="button"><span class="mode-tag">CLÁSSICO</span><strong>Battle Royale</strong><small>Sobreviva até ser o último jogador.</small></button><button class="mode-card" data-mode="ranked" type="button"><span class="mode-tag">COMPETITIVO</span><strong>Ranquiada</strong><small>Dispute pontos e suba de patente.</small></button></div><div class="world-summary"><div><span class="summary-icon">⌖</span><div><small>MAPA SELECIONADO</small><strong>Ilha — mapa de teste</strong></div></div><div><span class="summary-icon">♙</span><div><small>JOGADORES</small><strong>Até 50 · modo planejado</strong></div></div></div><div class="start-card"><div><p class="card-kicker">PRONTO PARA JOGAR?</p><h3 id="selected-mode-title">Battle Royale</h3><p>O lobby está em construção. O sistema de partidas ainda não está conectado.</p></div><button id="start-match" class="start-button" type="button">JOGAR <span>→</span></button></div><p id="game-feedback" class="game-feedback">Escolha um modo de jogo. Esta versão ainda é um protótipo visual.</p></section>
-</div><div class="game-version">ALPHA 0.6 · BATTLE ROYALE EM DESENVOLVIMENTO</div></section>
-</div><script type="module" src="/src/main.js"></script></body></html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#101820">
+  <meta name="description" content="Empire Online — arena TPS de treinamento.">
+  <title>Empire Online — Arena</title>
+</head>
+<body>
+  <div id="app">
+    <div id="game-root"></div>
+    <div id="boot-screen"><div class="boot-logo">E</div><b>EMPIRE ONLINE</b><span>PREPARANDO ARENA...</span><div class="boot-bar"><i></i></div></div>
+    <header class="top-hud">
+      <div class="brand"><b class="brand-icon">E</b><div><strong>EMPIRE ONLINE</strong><small>ARENA DE TREINAMENTO</small></div></div>
+      <div class="match-info"><span class="live-dot"></span> TREINO <i>•</i> <span id="timer">00:00</span></div>
+      <button id="pause-btn" class="hud-icon" aria-label="Pausar">Ⅱ</button>
+    </header>
+    <section class="left-hud">
+      <div class="player-card"><div class="avatar">E</div><div class="player-data"><b>JOGADOR</b><small>RECRUTA · NV. 1</small></div><div class="ping"><i></i> 32ms</div></div>
+      <div class="health-box"><div class="health-label"><span>HP</span><b id="hp-text">200/200</b></div><div class="health-track"><i id="hp-fill"></i></div><div class="armor-line">COLETE <b id="armor-text">100</b></div></div>
+    </section>
+    <section class="right-hud">
+      <div class="mini-map"><div class="map-title">ARENA 01</div><div class="map-grid"><i class="map-player"></i><i class="map-target t1"></i><i class="map-target t2"></i><i class="map-target t3"></i></div></div>
+      <div class="round-stats"><span>ALVOS</span><b id="target-count">06</b><span>ELIMINAÇÕES</span><b id="kills">00</b></div>
+    </section>
+    <div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
+    <div id="hitmarker" class="hitmarker">✕</div>
+    <div id="damage-layer"></div>
+    <div class="bottom-hud">
+      <div class="weapon-panel"><div class="weapon-name"><span id="weapon-name">RIFLE</span><small id="weapon-type">AR · AUTOMÁTICO</small></div><div class="ammo"><b id="ammo">30</b><span>/ <i id="reserve">120</i></span></div><div class="weapon-actions"><button id="reload-btn">↻ RECARREGAR</button><button id="weapon-btn">TROCAR ARMA</button></div></div>
+      <div class="action-buttons"><button id="crouch-btn" class="action-btn">⌄<small>AGACHAR</small></button><button id="jump-btn" class="action-btn">↑<small>PULAR</small></button><button id="aim-btn" class="action-btn aim">◎<small>MIRAR</small></button><button id="fire-btn" class="fire-btn"><span>●</span><small>ATIRAR</small></button></div>
+    </div>
+    <div class="mobile-controls"><div id="joystick" class="joystick"><div class="joy-ring"></div><div id="joy-knob" class="joy-knob"></div></div><div class="look-hint">DESLIZE PARA GIRAR A CÂMERA</div></div>
+    <div class="desktop-hint">WASD mover · Mouse mirar · Clique atirar · Espaço pular · Shift correr · R recarregar · 1/2 trocar arma</div>
+    <div id="pause-screen" class="overlay hidden"><div class="pause-card"><b class="brand-icon">E</b><p class="eyebrow">EMPIRE ONLINE</p><h2>PARTIDA PAUSADA</h2><p>O treinamento está esperando você.</p><button id="resume-btn" class="primary">CONTINUAR</button><button id="reset-btn" class="secondary">REINICIAR TREINO</button></div></div>
+    <div id="toast" class="toast"></div>
+    <div class="mode-label">MODO TREINAMENTO <span>•</span> DANO DE PEITO E CAPACETE</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
