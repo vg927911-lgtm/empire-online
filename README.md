@@ -1,39 +1,26 @@
 # Empire Online
 
-Protótipo TPS mobile-first feito com Vite e Three.js.
+Protótipo de FPS mobile em desenvolvimento, com lobby de shooter, arena 3D e controles adaptados para toque.
 
-## Versão visual 0.3
+## Lobby 0.4
+- Tela inicial redesenhada com composição cinematográfica de base militar.
+- Operador tático estilizado em destaque, painel de modo e botão de entrada na arena.
+- Navegação de lobby, arsenal/skins e configurações.
+- Seleção de skin salva localmente.
+- Layout responsivo para celular em orientação retrato e desktop.
 
-- Entrada direta no lobby, sem tela de carregamento bloqueando a abertura.
-- Lobby com painel de operador, modo de treino e estado local.
-- Tela de personalização e configurações com controles independentes do motor 3D.
-- Quatro paletas cosméticas selecionáveis; a escolha fica salva no aparelho.
-- Arena com texturas procedurais de areia, pedra e madeira, além de caixas, rochas e coberturas.
-- HUD de combate, controles touch, rifle, pistola e shotgun.
-- Alvos de treino com hitboxes de cabeça e peito, dano e indicação de CAPA.
-- Qualidade gráfica ajustada automaticamente para aparelhos modestos.
+## Executar localmente
 
-## Executar no Termux
-
-```sh
-git pull origin main
+```bash
 npm install
 npm run dev -- --host 0.0.0.0
 ```
 
-Abra `http://localhost:5173` no navegador do aparelho.
+Abra o endereço informado pelo Vite no navegador. Para gerar a versão de produção:
 
-## Controles
-
-### Celular
-- Analógico esquerdo: movimentar.
-- Arrastar no lado direito: girar a câmera.
-- Botões: atirar, mirar, pular, agachar, recarregar e trocar arma.
-
-### Computador
-- WASD/setas: movimentar; mouse: mirar/atirar.
-- Espaço: pular; Shift: correr; R: recarregar; 1/2/3: trocar arma.
+```bash
+npm run build
+```
 
 ## Estado do projeto
-
-Esta versão continua sendo um protótipo single-player local. As skins são cosméticas e salvas localmente no navegador. Ainda não existe servidor de contas, login Google, banco de dados online, matchmaking ou multiplayer. Para essas funções será necessário configurar um projeto Supabase (ou backend equivalente), as chaves públicas de ambiente e o provedor OAuth do Google; nenhuma chave privada deve ser colocada no código do cliente.
+Pré-alpha. O lobby é uma interface visual de protótipo; moedas, loja, temporada e dados de conta ainda são elementos demonstrativos. O modo de treinamento usa a arena local existente. Ainda não há autenticação, partidas online ou economia conectada a servidor.
